@@ -37,7 +37,7 @@ public class ManageUsersPanel extends JPanel {
         setBackground(Color.WHITE);
         
         try {
-            userService = (UserService) Naming.lookup("rmi://localhost:3501/UserService");
+            userService = (UserService) Naming.lookup("rmi://localhost:3506/UserService");
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Failed to connect to server: " + e.getMessage());
         }

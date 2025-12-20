@@ -1,23 +1,8 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package view;
 
-/**
- *
- * @author Pacifique Harerimana
- */
-
-
-import dao.BookingDAO;
-import dao.BookingDAOImpl;
-import dao.VehicleDAO;
-import dao.VehicleDAOImpl;
-import model.BookingRecord;
-import model.Vehicle;
-import model.User;
+import service.BookingService;
+import service.VehicleService;
+import java.rmi.Naming;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -26,40 +11,35 @@ import java.awt.*;
 import java.util.Date;
 import java.util.List;
 
-/**
- * Reports panel with tabs:
- * - Active Rentals
- * - Most Rented Vehicles
- * - Vehicle Availability
- * - Bookings History
- * - Export to PDF button
- *
- * Expected BookingDAO methods:
- *  - List<BookingRecord> getActiveRentals()
- *  - List<Object[]> getMostRentedVehicles() // model, times, totalIncome
- *  - List<BookingRecord> getBookingsHistory()
- *  - List<Vehicle> getVehiclesAvailability(Date date)
- */
 public class AdminReportsPanel extends JPanel {
 
-    private BookingDAO bookingDAO = new BookingDAOImpl();
-    private VehicleDAO vehicleDAO = new VehicleDAOImpl();
-
+    private BookingService bookingService;
+    private VehicleService vehicleService;
     private JTabbedPane tabs;
     private JTable tblActive, tblMostRented, tblAvailability, tblHistory;
-    private boolean[] tabsLoaded = new boolean[4]; // Track which tabs have been loaded
+    private boolean[] tabsLoaded = new boolean[4];
 
     public AdminReportsPanel() {
+        initializeRMIServices();
         setLayout(new BorderLayout(8,8));
         setBackground(Color.WHITE);
         buildTop();
         buildTabs();
     }
+    
+    private void initializeRMIServices() {
+        try {
+            bookingService = (BookingService) Naming.lookup("rmi://localhost:3506/BookingService");
+            vehicleService = (VehicleService) Naming.lookup("rmi://localhost:3506/VehicleService");
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Failed to connect to server: " + e.getMessage());
+        }
+    }
 
     private void buildTop(){
         JPanel top = new JPanel(new BorderLayout());
         top.setBackground(Color.WHITE);
-        top.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        top.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
         JLabel titleLabel = new JLabel("Reports & Analytics");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
@@ -84,36 +64,32 @@ public class AdminReportsPanel extends JPanel {
         tabs = new JTabbedPane();
         tabs.setFont(new Font("Segoe UI", Font.PLAIN, 14));
 
-        // Active rentals
         tblActive = new JTable(new DefaultTableModel(new String[]{"Customer","Vehicle","Start Date","End Date","Total Cost","Status"},0));
         tblActive.setRowHeight(25);
         tblActive.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         tblActive.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
         tabs.addTab("Active Rentals", new JScrollPane(tblActive));
 
-        // Most rented
         tblMostRented = new JTable(new DefaultTableModel(new String[]{"Vehicle Model","Times Rented","Total Income"},0));
         tblMostRented.setRowHeight(25);
         tblMostRented.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         tblMostRented.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
         tabs.addTab("Most Rented", new JScrollPane(tblMostRented));
 
-        // Availability
         tblAvailability = new JTable(new DefaultTableModel(new String[]{"Vehicle Model","Category","Price/Day","Available Today"},0));
         tblAvailability.setRowHeight(25);
         tblAvailability.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         tblAvailability.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
         
-        // Add custom renderer for availability column coloring
         tblAvailability.getColumnModel().getColumn(3).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 if (!isSelected) {
                     if ("Yes".equals(value)) {
-                        c.setBackground(new Color(144, 238, 144)); // Light green
+                        c.setBackground(new Color(144, 238, 144));
                     } else {
-                        c.setBackground(new Color(255, 182, 193)); // Light red
+                        c.setBackground(new Color(255, 182, 193));
                     }
                 } else {
                     c.setBackground(table.getSelectionBackground());
@@ -124,7 +100,6 @@ public class AdminReportsPanel extends JPanel {
         
         tabs.addTab("Availability", new JScrollPane(tblAvailability));
 
-        // History
         tblHistory = new JTable(new DefaultTableModel(new String[]{"Customer","Vehicle","Start Date","End Date","Total Cost","Status"},0));
         tblHistory.setRowHeight(25);
         tblHistory.setFont(new Font("Segoe UI", Font.PLAIN, 12));
@@ -133,7 +108,6 @@ public class AdminReportsPanel extends JPanel {
 
         add(tabs, BorderLayout.CENTER);
 
-        // load data when tab changed
         tabs.addChangeListener(e -> loadCurrentTabAsync());
         loadCurrentTabAsync();
     }
@@ -142,18 +116,17 @@ public class AdminReportsPanel extends JPanel {
         int idx = tabs.getSelectedIndex();
         if (idx < 0 || idx >= tabsLoaded.length) return;
         
-        // Only load if not already loaded
         if (tabsLoaded[idx]) return;
         
-        // Use SwingWorker for background loading
         SwingWorker<Object, Void> worker = new SwingWorker<Object, Void>() {
             @Override
             protected Object doInBackground() throws Exception {
-                // Load data in background thread
-                if (idx == 0) return bookingDAO.getActiveRentalsReport();
-                else if (idx == 1) return bookingDAO.getMostRentedVehicles();
-                else if (idx == 2) return bookingDAO.getVehicleAvailabilityReport(new Date());
-                else if (idx == 3) return bookingDAO.getBookingsHistoryReport();
+                if (bookingService == null) return null;
+                
+                if (idx == 0) return bookingService.getActiveRentalsReport();
+                else if (idx == 1) return bookingService.getMostRentedVehicles();
+                else if (idx == 2) return bookingService.getVehicleAvailabilityReport(new Date());
+                else if (idx == 3) return bookingService.getBookingsHistoryReport();
                 return null;
             }
             
@@ -161,11 +134,13 @@ public class AdminReportsPanel extends JPanel {
             protected void done() {
                 try {
                     Object data = get();
-                    if (idx == 0) populateActiveTable(data);
-                    else if (idx == 1) populateMostRentedTable(data);
-                    else if (idx == 2) populateAvailabilityTable(data);
-                    else if (idx == 3) populateHistoryTable(data);
-                    tabsLoaded[idx] = true;
+                    if (data != null) {
+                        if (idx == 0) populateActiveTable(data);
+                        else if (idx == 1) populateMostRentedTable(data);
+                        else if (idx == 2) populateAvailabilityTable(data);
+                        else if (idx == 3) populateHistoryTable(data);
+                        tabsLoaded[idx] = true;
+                    }
                 } catch (Exception ex){ ex.printStackTrace(); }
             }
         };
@@ -173,16 +148,10 @@ public class AdminReportsPanel extends JPanel {
     }
     
     public void refreshAllTabs() {
-        // Reset loaded flags and reload current tab
         for (int i = 0; i < tabsLoaded.length; i++) {
             tabsLoaded[i] = false;
         }
         loadCurrentTabAsync();
-    }
-
-    private void loadActive(){
-        List<Object[]> list = bookingDAO.getActiveRentalsReport();
-        populateActiveTable(list);
     }
     
     private void populateActiveTable(Object data) {
@@ -194,11 +163,6 @@ public class AdminReportsPanel extends JPanel {
             m.addRow(row);
         }
     }
-
-    private void loadMostRented(){
-        List<Object[]> rows = bookingDAO.getMostRentedVehicles();
-        populateMostRentedTable(rows);
-    }
     
     private void populateMostRentedTable(Object data) {
         DefaultTableModel m = (DefaultTableModel) tblMostRented.getModel();
@@ -207,17 +171,12 @@ public class AdminReportsPanel extends JPanel {
         List<Object[]> rows = (List<Object[]>) data;
         for (Object[] r : rows) {
             Object[] formatted = new Object[]{
-                r[0], // model
-                r[1], // times rented
-                String.format("%,.0f RWF", (Double)r[2]) // total income
+                r[0],
+                r[1],
+                String.format("%,.0f RWF", (Double)r[2])
             };
             m.addRow(formatted);
         }
-    }
-
-    private void loadAvailability(){
-        List<Object[]> availabilityData = bookingDAO.getVehicleAvailabilityReport(new Date());
-        populateAvailabilityTable(availabilityData);
     }
     
     private void populateAvailabilityTable(Object data) {
@@ -229,11 +188,6 @@ public class AdminReportsPanel extends JPanel {
             m.addRow(row);
         }
         tblAvailability.repaint();
-    }
-
-    private void loadHistory(){
-        List<Object[]> rows = bookingDAO.getBookingsHistoryReport();
-        populateHistoryTable(rows);
     }
     
     private void populateHistoryTable(Object data) {
@@ -274,18 +228,15 @@ public class AdminReportsPanel extends JPanel {
     
     private void exportTableToCsv(JTable table, String title, String filePath) throws Exception {
         try (java.io.FileWriter writer = new java.io.FileWriter(filePath)) {
-            // Write title and timestamp
             writer.append("HAPA Vehicle Rental System - " + title + "\n");
             writer.append("Generated on: " + new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date()) + "\n\n");
             
-            // Write headers
             for (int i = 0; i < table.getColumnCount(); i++) {
                 writer.append(table.getColumnName(i));
                 if (i < table.getColumnCount() - 1) writer.append(",");
             }
             writer.append("\n");
             
-            // Write data
             for (int row = 0; row < table.getRowCount(); row++) {
                 for (int col = 0; col < table.getColumnCount(); col++) {
                     Object value = table.getValueAt(row, col);

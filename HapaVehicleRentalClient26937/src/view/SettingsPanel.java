@@ -172,16 +172,40 @@ public class SettingsPanel extends JPanel {
 
         // Add save functionality for profile updates
         btnSave.addActionListener(e -> {
+            // Validate phone number (Rwandan format)
+            String phone = tfTel.getText().trim();
+            if (!phone.matches("07\\d{8}")) {
+                JOptionPane.showMessageDialog(this, "Invalid phone number format! Use 07XXXXXXXX");
+                tfTel.requestFocus();
+                return;
+            }
+            
+            // Validate email format
+            String email = tfEmail.getText().trim();
+            if (!isValidEmail(email)) {
+                JOptionPane.showMessageDialog(this, "Invalid email format!");
+                tfEmail.requestFocus();
+                return;
+            }
+            
+            // Validate name is not empty
+            String name = tfName.getText().trim();
+            if (name.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Name cannot be empty!");
+                tfName.requestFocus();
+                return;
+            }
+            
             try {
                 UserService userService = (UserService) Naming.lookup("rmi://localhost:3506/UserService");
 
                 // Update user object with form data
-                user.setFullName(tfName.getText());
-                user.setPhone(tfTel.getText());
-                user.setEmail(tfEmail.getText());
+                user.setFullName(name);
+                user.setPhone(phone);
+                user.setEmail(email);
 
                 // Attempt to save changes to database
-                boolean ok = userService.updateUserProfile(user);
+                boolean ok = userService.updateUser(user);
 
                 if (ok)
                     JOptionPane.showMessageDialog(this, "Profile updated successfully.");
@@ -333,5 +357,16 @@ public class SettingsPanel extends JPanel {
                 BorderFactory.createEmptyBorder(8, 10, 8, 10)
         ));
         return tf;
+    }
+    
+    /**
+     * Validates email format using regex pattern
+     * 
+     * @param email Email address to validate
+     * @return true if email format is valid, false otherwise
+     */
+    private boolean isValidEmail(String email) {
+        String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
+        return email.matches(emailRegex);
     }
 }

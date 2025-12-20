@@ -59,4 +59,69 @@ public class BookingServiceImpl extends UnicastRemoteObject implements BookingSe
     public boolean reopenBooking(int bookingId, Date newStartDate, Date newEndDate) throws RemoteException {
         return bookingDAO.reopenBooking(bookingId, newStartDate, newEndDate);
     }
+    
+    @Override
+    public List<String[]> getTodaysBookingsWithDetails() throws RemoteException {
+        return bookingDAO.getTodaysBookingsWithDetails();
+    }
+    
+    @Override
+    public int[] getDashboardStats() throws RemoteException {
+        return bookingDAO.getDashboardStats();
+    }
+    
+    @Override
+    public List<Object[]> getPendingBookingsReport() throws RemoteException {
+        return bookingDAO.getPendingBookingsReport();
+    }
+    
+    @Override
+    public boolean approveBooking(int bookingId) throws RemoteException {
+        return bookingDAO.approveBooking(bookingId);
+    }
+    
+    @Override
+    public boolean rejectBooking(int bookingId) throws RemoteException {
+        return bookingDAO.rejectBooking(bookingId);
+    }
+    
+    @Override
+    public boolean rejectBookingWithReason(int bookingId, String reason) throws RemoteException {
+        return bookingDAO.rejectBookingWithReason(bookingId, reason);
+    }
+    
+    @Override
+    public List<Object[]> getActiveRentalsReport() throws RemoteException {
+        return bookingDAO.getActiveRentalsReport();
+    }
+    
+    @Override
+    public List<Object[]> getMostRentedVehicles() throws RemoteException {
+        return bookingDAO.getMostRentedVehicles();
+    }
+    
+    @Override
+    public List<Object[]> getVehicleAvailabilityReport(java.util.Date date) throws RemoteException {
+        return bookingDAO.getVehicleAvailabilityReport(date);
+    }
+    
+    @Override
+    public List<Object[]> getBookingsHistoryReport() throws RemoteException {
+        return bookingDAO.getBookingsHistoryReport();
+    }
+    
+    @Override
+    public boolean isDuplicateBooking(int customerId, int vehicleId, java.util.Date startDate, java.util.Date endDate) throws RemoteException {
+        return bookingDAO.isDuplicateBooking(customerId, vehicleId, startDate, endDate);
+    }
+    
+    @Override
+    public boolean isVehicleUnavailable(int vehicleId, java.util.Date startDate, java.util.Date endDate) throws RemoteException {
+        return bookingDAO.isVehicleUnavailable(vehicleId, startDate, endDate);
+    }
+    
+    @Override
+    public String getNextAvailableDates(int vehicleId, java.util.Date requestedStart, java.util.Date requestedEnd) throws RemoteException {
+        return bookingDAO.getNextAvailableDates(vehicleId, requestedStart, requestedEnd);
+    }
 }

@@ -211,6 +211,25 @@ public class BookingForm extends JDialog {
         try {
             BookingService bookingService = (BookingService) Naming.lookup("rmi://localhost:3506/BookingService");
             
+            // 1. Check for duplicate booking (same customer, same vehicle, same dates)
+            if (bookingService.isDuplicateBooking(user.getId(), vehicle.getId(), s, e)) {
+                JOptionPane.showMessageDialog(this,
+                        "You already booked this vehicle on these exact dates.",
+                        "Duplicate Booking", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            
+            // 2. Check if vehicle is unavailable (any customer, overlapping dates)
+            if (bookingService.isVehicleUnavailable(vehicle.getId(), s, e)) {
+                String availabilityInfo = bookingService.getNextAvailableDates(vehicle.getId(), s, e);
+                JOptionPane.showMessageDialog(this,
+                        "This vehicle is already booked by another customer in the selected date range.\n\n"
+                        + availabilityInfo + "\n\n"
+                        + "Please choose different dates.",
+                        "Vehicle Unavailable", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            
             Booking b = new Booking();
             b.setCustomerId(user.getId());
             b.setVehicleId(vehicle.getId());
