@@ -47,8 +47,8 @@ public class CustomerDashboard extends javax.swing.JFrame {
         // Configure main content panel layout
         panelContent.setLayout(new java.awt.BorderLayout());
 
-        // Display settings panel by default (since it's already RMI-enabled)
-        showPage(new SettingsPanel(loggedInUser));
+        // Display book vehicle panel by default for better user experience
+        showPage(new BookVehiclePanel(loggedInUser));
         
         // Configure company logo display properties
         imageLabel.setMaximumSize(null);            // Remove size constraints
