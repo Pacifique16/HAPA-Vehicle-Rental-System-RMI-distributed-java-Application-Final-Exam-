@@ -1,19 +1,43 @@
 package model;
 
+import javax.persistence.*;
 import java.io.Serializable;
+import java.util.List;
 
+@Entity
+@Table(name = "users")
 public class User implements java.io.Serializable {
     
     private static final long serialVersionUID = 1L;
     
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
+    
+    @Column(name = "username", nullable = false, unique = true)
     private String username;
+    
+    @Column(name = "password", nullable = false)
     private String password;
+    
+    @Column(name = "full_name", nullable = false)
     private String fullName;
+    
+    @Column(name = "phone", nullable = false, unique = true)
     private String phone;
+    
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
+    
+    @Column(name = "role", nullable = false)
     private String role;
+    
+    @Column(name = "status")
     private String status = "Active";
+    
+    // One-to-Many: One user can have many bookings
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Booking> bookings;
     
     public User() {}
     

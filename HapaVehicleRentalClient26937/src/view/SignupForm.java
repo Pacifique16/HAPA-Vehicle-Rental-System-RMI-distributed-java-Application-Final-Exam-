@@ -344,6 +344,12 @@ private void addPlaceholderPassword(javax.swing.JPasswordField field, String pla
         // Attempt to save user to database via RMI
         try {
             UserService userService = (UserService) Naming.lookup("rmi://localhost:3506/UserService");
+            
+            System.out.println("DEBUG: Attempting to register user:");
+            System.out.println("Username: " + username);
+            System.out.println("Email: " + email);
+            System.out.println("Phone: " + phone);
+            
             boolean success = userService.addUser(u);
         
         if (success) {

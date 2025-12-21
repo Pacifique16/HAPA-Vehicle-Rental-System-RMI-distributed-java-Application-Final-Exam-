@@ -205,7 +205,7 @@ public class SettingsPanel extends JPanel {
                 user.setEmail(email);
 
                 // Attempt to save changes to database
-                boolean ok = userService.updateUser(user);
+                boolean ok = userService.updateUserProfile(user);
 
                 if (ok)
                     JOptionPane.showMessageDialog(this, "Profile updated successfully.");

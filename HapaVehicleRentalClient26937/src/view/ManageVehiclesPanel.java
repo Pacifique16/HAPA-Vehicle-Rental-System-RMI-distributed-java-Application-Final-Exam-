@@ -363,7 +363,22 @@ public class ManageVehiclesPanel extends JPanel {
             tfSeats.setPreferredSize(new java.awt.Dimension(200, 25));
             
             tfImagePath = new JTextField(v==null?"":v.getImagePath());
-            tfImagePath.setPreferredSize(new java.awt.Dimension(200, 25));
+            tfImagePath.setPreferredSize(new java.awt.Dimension(150, 25));
+            
+            JButton btnBrowse = new JButton("Browse");
+            btnBrowse.setPreferredSize(new java.awt.Dimension(70, 25));
+            btnBrowse.addActionListener(e -> {
+                JFileChooser fc = new JFileChooser();
+                fc.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Image files", "jpg", "jpeg", "png", "gif"));
+                if (fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+                    tfImagePath.setText(fc.getSelectedFile().getAbsolutePath());
+                }
+            });
+            
+            JPanel imagePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+            imagePanel.add(tfImagePath);
+            imagePanel.add(Box.createHorizontalStrut(5));
+            imagePanel.add(btnBrowse);
 
             c.gridx=0; c.gridy=0; p.add(new JLabel("Plate Number *:"), c); c.gridx=1; p.add(tfPlate, c);
             c.gridx=0; c.gridy=1; p.add(new JLabel("Model *:"), c); c.gridx=1; p.add(tfModel, c);
@@ -372,7 +387,7 @@ public class ManageVehiclesPanel extends JPanel {
             c.gridx=0; c.gridy=4; p.add(new JLabel("Transmission:"), c); c.gridx=1; p.add(cbTransmission, c);
             c.gridx=0; c.gridy=5; p.add(new JLabel("Price/day *:"), c); c.gridx=1; p.add(tfPrice, c);
             c.gridx=0; c.gridy=6; p.add(new JLabel("Seats:"), c); c.gridx=1; p.add(tfSeats, c);
-            c.gridx=0; c.gridy=7; p.add(new JLabel("Image:"), c); c.gridx=1; p.add(tfImagePath, c);
+            c.gridx=0; c.gridy=7; p.add(new JLabel("Image:"), c); c.gridx=1; p.add(imagePanel, c);
 
             add(p, BorderLayout.CENTER);
             JPanel b = new JPanel(new FlowLayout(FlowLayout.RIGHT));

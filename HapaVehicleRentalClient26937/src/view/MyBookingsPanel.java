@@ -449,9 +449,18 @@ public class MyBookingsPanel extends JPanel {
         lblDays.setText("Days: " + days);
         lblTotal.setText("Total: " + String.format("%,.0f RWF", booking.getTotalCost()));
         
-        // Show rejection reason if booking is rejected
-        if ("REJECTED".equals(booking.getStatus()) && booking.getRejectionReason() != null && !booking.getRejectionReason().trim().isEmpty()) {
-            lblStatus.setText("Reason: " + booking.getRejectionReason());
+        // Show rejection reason if booking is rejected (handle both old and new status formats)
+        if ("REJECTED".equals(booking.getStatus()) || "Rejected".equals(booking.getStatus())) {
+            System.out.println("DEBUG: Booking " + booking.getId() + " is REJECTED/Rejected");
+            System.out.println("DEBUG: Rejection reason: '" + booking.getRejectionReason() + "'");
+            System.out.println("DEBUG: Rejection reason is null: " + (booking.getRejectionReason() == null));
+            System.out.println("DEBUG: Rejection reason is empty: " + (booking.getRejectionReason() != null && booking.getRejectionReason().trim().isEmpty()));
+            
+            if (booking.getRejectionReason() != null && !booking.getRejectionReason().trim().isEmpty()) {
+                lblStatus.setText("<html><b>Status: REJECTED</b><br><font color='red'>Reason: " + booking.getRejectionReason() + "</font></html>");
+            } else {
+                lblStatus.setText("<html><b>Status: REJECTED</b><br><font color='gray'>(No reason provided)</font></html>");
+            }
         } else {
             lblStatus.setText("Status: " + booking.getStatus());
         }

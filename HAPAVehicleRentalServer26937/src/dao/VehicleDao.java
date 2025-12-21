@@ -4,14 +4,14 @@ import model.Vehicle;
 import java.util.List;
 
 public interface VehicleDAO {
+    boolean saveVehicle(Vehicle vehicle);
     List<Vehicle> getAllVehicles();
-    int countVehicles();
-    List<Vehicle> searchVehicles(String query);
-    Vehicle findById(int id);
-    boolean deleteVehicle(int id);
-    boolean addVehicle(Vehicle vehicle);
+    Vehicle getVehicleById(int id);
     boolean updateVehicle(Vehicle vehicle);
-    int countAvailableToday();
+    boolean deleteVehicle(int id);
+    List<Vehicle> getAvailableVehicles();
+    List<Vehicle> searchVehicles(String query);
     boolean updateVehicleStatus(int vehicleId, String status);
-    boolean isVehicleAvailableForBooking(int vehicleId);
+    List<Vehicle> getVehiclesByCategory(String category);
+    boolean isDuplicatePlateNumber(String plateNumber);
 }

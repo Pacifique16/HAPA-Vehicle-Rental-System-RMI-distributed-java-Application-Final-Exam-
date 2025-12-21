@@ -1,21 +1,49 @@
 package model;
 
+import javax.persistence.*;
 import java.io.Serializable;
+import java.util.List;
 
+@Entity
+@Table(name = "vehicles")
 public class Vehicle implements Serializable {
     
     private static final long serialVersionUID = 1L;
     
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
+    
+    @Column(name = "plate_number", nullable = false, unique = true)
     private String plateNumber;
+    
+    @Column(name = "model", nullable = false)
     private String model;
+    
+    @Column(name = "category", nullable = false)
     private String category;
+    
+    @Column(name = "fuel_type")
     private String fuelType;
+    
+    @Column(name = "transmission")
     private String transmission;
+    
+    @Column(name = "seats")
     private int seats;
+    
+    @Column(name = "price_per_day", nullable = false)
     private double pricePerDay;
+    
+    @Column(name = "image_path")
     private String imagePath;
+    
+    @Column(name = "status")
     private String status = "Available";
+    
+    // One-to-Many: One vehicle can have many bookings
+    @OneToMany(mappedBy = "vehicle", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Booking> bookings;
     
     public Vehicle() {}
     

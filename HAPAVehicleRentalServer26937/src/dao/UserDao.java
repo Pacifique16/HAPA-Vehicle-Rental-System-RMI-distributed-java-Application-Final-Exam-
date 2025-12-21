@@ -4,15 +4,16 @@ import model.User;
 import java.util.List;
 
 public interface UserDAO {
-    User login(String username, String password);
-    boolean addUser(User user);
-    boolean updateUserProfile(User user);
-    boolean changePassword(int id, String oldP, String newP);
+    boolean saveUser(User user);
+    User getUserById(int id);
+    User getUserByUsername(String username);
+    User getUserByEmail(String email);
     List<User> getAllUsers();
-    int countUsers();
-    boolean deleteUser(int id);
     boolean updateUser(User user);
-    User findById(int id);
+    boolean deleteUser(int id);
     User authenticateUser(String username, String password);
+    boolean updateUserProfile(User user);
+    boolean isDuplicateUsername(String username);
+    boolean isDuplicateEmail(String email);
     boolean updateUserStatus(int userId, String status);
 }

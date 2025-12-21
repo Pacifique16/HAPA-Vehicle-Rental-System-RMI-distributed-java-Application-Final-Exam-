@@ -1,331 +1,284 @@
-/*
- * HAPA Vehicle Rental System - User Data Access Object Implementation
- * Implements all database operations related to user management
- * Provides concrete implementation of UserDAO interface methods
- * Handles user authentication, CRUD operations, and profile management
- */
 package dao;
 
-/**
- * UserDAOImpl - Implementation of UserDAO interface
- * Provides concrete database operations for user management
- * Handles authentication, user CRUD operations, and status management
- *
- * @author Pacifique Harerimana
- */
-
 import model.User;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.ArrayList;
+import util.HibernateUtil;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
+import org.hibernate.query.Query;
 import java.util.List;
+import java.util.ArrayList;
 
-/**
- * Implementation class for user database operations
- * Provides concrete methods for user authentication and management
- */
 public class UserDAOImpl implements UserDAO {
-
-    /**
-     * Authenticates user with username and password
-     * Checks credentials against database and validates account status
-     * Prevents login for inactive accounts
-     * 
-     * @param username User's username
-     * @param password User's password
-     * @return User object if authentication successful and account active, null otherwise
-     */
+    
     @Override
     public User login(String username, String password) {
-
-        String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
-        System.out.println("Attempting login with username: " + username);
-
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement pst = con.prepareStatement(sql)) {
-
-            // Verify database connection
-            if (con == null) {
-                System.out.println("Database connection is null!");
-                return null;
-            }
-
-            // Set query parameters
-            pst.setString(1, username);
-            pst.setString(2, password);
-            System.out.println("Executing query: " + sql);
-
-            ResultSet rs = pst.executeQuery();
-
-            if (rs.next()) {
-                System.out.println("User found in database!");
-                
-                // Create user object from database record
-                User u = new User();
-                u.setId(rs.getInt("id"));
-                u.setUsername(rs.getString("username"));
-                u.setPassword(rs.getString("password"));
-                u.setFullName(rs.getString("full_name"));
-                u.setPhone(rs.getString("phone"));
-                u.setEmail(rs.getString("email"));
-                u.setRole(rs.getString("role"));
-                u.setStatus(rs.getString("status"));
-                System.out.println("User role: " + u.getRole());
-                
-                // Verify account is active
-                if ("Inactive".equals(u.getStatus())) {
-                    System.out.println("User account is inactive");
-                    return null; // Prevent login for inactive users
-                }
-                
-                return u;
-            } else {
-                System.out.println("No user found with these credentials");
-            }
-
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        try {
+            Query<User> query = session.createQuery(
+                "FROM User WHERE username = :username AND password = :password", User.class);
+            query.setParameter("username", username);
+            query.setParameter("password", password);
+            return query.uniqueResult();
         } catch (Exception e) {
-            System.out.println("Login error: " + e.getMessage());
             e.printStackTrace();
+            return null;
+        } finally {
+            session.close();
         }
-
-        return null; // Authentication failed
     }
     
+    @Override
+    public User authenticateUser(String username, String password) {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        try {
+            Query<User> query = session.createQuery(
+                "FROM User WHERE username = :username AND password = :password AND (status = 'Active' OR status IS NULL)", User.class);
+            query.setParameter("username", username);
+            query.setParameter("password", password);
+            return query.uniqueResult();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            session.close();
+        }
+    }
     
-    /**
-     * Adds a new user to the database
-     * Sets default status to "Active" if not specified
-     * 
-     * @param user User object containing user information
-     * @return true if user was successfully added, false otherwise
-     */
     @Override
     public boolean addUser(User user) {
-        String sql = "INSERT INTO users (username, password, full_name, phone, email, role, status) VALUES (?, ?, ?, ?, ?, ?, ?)";
-
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement pst = con.prepareStatement(sql)) {
-
-            // Set all user parameters
-            pst.setString(1, user.getUsername());
-            pst.setString(2, user.getPassword());
-            pst.setString(3, user.getFullName());
-            pst.setString(4, user.getPhone());
-            pst.setString(5, user.getEmail());
-            pst.setString(6, user.getRole());
-            pst.setString(7, user.getStatus() != null ? user.getStatus() : "Active");
-
-            return pst.executeUpdate() > 0;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    /**
-     * Updates user profile information (name, phone, email)
-     * Does not update username, password, role, or status
-     * 
-     * @param user User object with updated profile information
-     * @return true if profile was successfully updated, false otherwise
-     */
-    @Override
-    public boolean updateUserProfile(User user) {
-        String sql = "UPDATE users SET full_name = ?, phone = ?, email = ? WHERE id = ?";
-
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement pst = con.prepareStatement(sql)) {
-
-            // Set profile update parameters
-            pst.setString(1, user.getFullName());
-            pst.setString(2, user.getPhone());
-            pst.setString(3, user.getEmail());
-            pst.setInt(4, user.getId());
-
-            return pst.executeUpdate() > 0;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-
-    /**
-     * Changes user password after verifying current password
-     * Requires old password verification for security
-     * 
-     * @param id User ID
-     * @param oldP Current password for verification
-     * @param newP New password to set
-     * @return true if password was successfully changed, false otherwise
-     */
-    @Override
-    public boolean changePassword(int id, String oldP, String newP) {
-        String sql = "UPDATE users SET password = ? WHERE id = ? AND password = ?";
-
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement pst = con.prepareStatement(sql)) {
-
-            // Set password change parameters with verification
-            pst.setString(1, newP);  // New password
-            pst.setInt(2, id);       // User ID
-            pst.setString(3, oldP);  // Old password for verification
-
-            return pst.executeUpdate() > 0;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-
-@Override
-public List<User> getAllUsers() {
-
-    List<User> list = new ArrayList<>();
-    String sql = "SELECT * FROM users";
-
-    try (Connection con = DBConnection.getConnection();
-         PreparedStatement pst = con.prepareStatement(sql)) {
-
-        ResultSet rs = pst.executeQuery();
-
-        while (rs.next()) {
-            User u = new User();
-            u.setId(rs.getInt("id"));
-            u.setUsername(rs.getString("username"));
-            u.setPassword(rs.getString("password"));
-            u.setFullName(rs.getString("full_name"));
-            u.setPhone(rs.getString("phone"));
-            u.setEmail(rs.getString("email"));
-            u.setRole(rs.getString("role"));
-            u.setStatus(rs.getString("status"));
-
-            list.add(u);
-        }
-
-    } catch (Exception e) {
-        e.printStackTrace();
-    }
-
-    return list;
-}
-
-    @Override
-    public int countUsers() {
-        String sql = "SELECT COUNT(*) FROM users";
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement pst = con.prepareStatement(sql);
-             ResultSet rs = pst.executeQuery()) {
-            if (rs.next()) {
-                return rs.getInt(1);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return 0;
-    }
-
-    @Override
-    public boolean deleteUser(int id) {
-        String sql = "DELETE FROM users WHERE id = ?";
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement pst = con.prepareStatement(sql)) {
-            pst.setInt(1, id);
-            return pst.executeUpdate() > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    @Override
-    public boolean updateUser(User user) {
-        String sql = "UPDATE users SET username = ?, full_name = ?, phone = ?, email = ?, role = ?, status = ?";
-        if (user.getPassword() != null && !user.getPassword().isEmpty()) {
-            sql += ", password = ?";
-        }
-        sql += " WHERE id = ?";
-        
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement pst = con.prepareStatement(sql)) {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        Transaction transaction = null;
+        try {
+            transaction = session.beginTransaction();
             
-            pst.setString(1, user.getUsername());
-            pst.setString(2, user.getFullName());
-            pst.setString(3, user.getPhone());
-            pst.setString(4, user.getEmail());
-            pst.setString(5, user.getRole());
-            pst.setString(6, user.getStatus() != null ? user.getStatus() : "Active");
+            System.out.println("=== USER REGISTRATION DEBUG ===");
+            System.out.println("Attempting to register user: " + user.getUsername() + ", " + user.getEmail());
+            System.out.println("Full name: " + user.getFullName());
+            System.out.println("Phone: " + user.getPhone());
+            System.out.println("Role: " + user.getRole());
             
-            if (user.getPassword() != null && !user.getPassword().isEmpty()) {
-                pst.setString(7, user.getPassword());
-                pst.setInt(8, user.getId());
-            } else {
-                pst.setInt(7, user.getId());
+            // Check for duplicate username
+            if (isUsernameExists(user.getUsername())) {
+                System.out.println("ERROR: Username already exists: " + user.getUsername());
+                return false;
             }
             
-            return pst.executeUpdate() > 0;
+            // Check for duplicate email
+            if (isEmailExists(user.getEmail())) {
+                System.out.println("ERROR: Email already exists: " + user.getEmail());
+                return false;
+            }
+            
+            System.out.println("No duplicates found. Saving user to database...");
+            session.save(user);
+            transaction.commit();
+            System.out.println("SUCCESS: User registered successfully: " + user.getUsername());
+            return true;
         } catch (Exception e) {
+            if (transaction != null) transaction.rollback();
+            System.err.println("ERROR: Failed to register user: " + e.getMessage());
             e.printStackTrace();
             return false;
+        } finally {
+            session.close();
         }
-    }
-
-    @Override
-    public User findById(int id) {
-        String sql = "SELECT * FROM users WHERE id = ?";
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement pst = con.prepareStatement(sql)) {
-            
-            pst.setInt(1, id);
-            ResultSet rs = pst.executeQuery();
-            
-            if (rs.next()) {
-                User u = new User();
-                u.setId(rs.getInt("id"));
-                u.setUsername(rs.getString("username"));
-                u.setPassword(rs.getString("password"));
-                u.setFullName(rs.getString("full_name"));
-                u.setPhone(rs.getString("phone"));
-                u.setEmail(rs.getString("email"));
-                u.setRole(rs.getString("role"));
-                u.setStatus(rs.getString("status"));
-                return u;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
     }
     
-    /**
-     * Alternative authentication method (delegates to login)
-     * Provides additional authentication entry point
-     * 
-     * @param username User's username
-     * @param password User's password
-     * @return User object if authentication successful, null otherwise
-     */
-    public User authenticateUser(String username, String password) {
-        return login(username, password);
+    @Override
+    public List<User> getAllUsers() {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        try {
+            Query<User> query = session.createQuery("FROM User", User.class);
+            List<User> results = query.list();
+            return results != null ? results : new ArrayList<>();
+        } catch (Exception e) {
+            System.err.println("Error getting all users: " + e.getMessage());
+            return new ArrayList<>();
+        } finally {
+            session.close();
+        }
+    }
+    
+    @Override
+    public boolean updateUser(User user) {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        Transaction transaction = null;
+        try {
+            transaction = session.beginTransaction();
+            session.update(user);
+            transaction.commit();
+            return true;
+        } catch (Exception e) {
+            if (transaction != null) transaction.rollback();
+            e.printStackTrace();
+            return false;
+        } finally {
+            session.close();
+        }
+    }
+    
+    @Override
+    public boolean deleteUser(int id) {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        Transaction transaction = null;
+        try {
+            transaction = session.beginTransaction();
+            User user = session.get(User.class, id);
+            if (user != null) {
+                session.delete(user);
+                transaction.commit();
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            if (transaction != null) transaction.rollback();
+            e.printStackTrace();
+            return false;
+        } finally {
+            session.close();
+        }
+    }
+    
+    @Override
+    public User findById(int id) {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        try {
+            return session.get(User.class, id);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            session.close();
+        }
+    }
+    
+    @Override
+    public boolean changePassword(int id, String oldP, String newP) {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        Transaction transaction = null;
+        try {
+            transaction = session.beginTransaction();
+            User user = session.get(User.class, id);
+            if (user != null && user.getPassword().equals(oldP)) {
+                user.setPassword(newP);
+                session.update(user);
+                transaction.commit();
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            if (transaction != null) transaction.rollback();
+            e.printStackTrace();
+            return false;
+        } finally {
+            session.close();
+        }
+    }
+    
+    @Override
+    public boolean updateUserProfile(User user) {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        Transaction transaction = null;
+        try {
+            transaction = session.beginTransaction();
+            
+            System.out.println("=== USER PROFILE UPDATE DEBUG ===");
+            System.out.println("Updating user ID: " + user.getId());
+            System.out.println("New email: " + user.getEmail());
+            System.out.println("New phone: " + user.getPhone());
+            
+            // Check if email exists for OTHER users (not this user)
+            Query<Long> emailQuery = session.createQuery(
+                "SELECT COUNT(*) FROM User WHERE email = :email AND id != :id", Long.class);
+            emailQuery.setParameter("email", user.getEmail());
+            emailQuery.setParameter("id", user.getId());
+            
+            if (emailQuery.uniqueResult() > 0) {
+                System.out.println("ERROR: Email already exists for another user");
+                return false;
+            }
+            
+            System.out.println("No email conflicts. Updating user profile...");
+            session.update(user);
+            transaction.commit();
+            System.out.println("SUCCESS: User profile updated successfully");
+            return true;
+        } catch (Exception e) {
+            if (transaction != null) transaction.rollback();
+            System.err.println("ERROR: Failed to update user profile: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        } finally {
+            session.close();
+        }
+    }
+    
+    @Override
+    public int countUsers() {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        try {
+            Query<Long> query = session.createQuery("SELECT COUNT(*) FROM User", Long.class);
+            return query.uniqueResult().intValue();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        } finally {
+            session.close();
+        }
     }
     
     @Override
     public boolean updateUserStatus(int userId, String status) {
-        String sql = "UPDATE users SET status = ? WHERE id = ?";
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement pst = con.prepareStatement(sql)) {
-            pst.setString(1, status);
-            pst.setInt(2, userId);
-            return pst.executeUpdate() > 0;
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        Transaction transaction = null;
+        try {
+            transaction = session.beginTransaction();
+            User user = session.get(User.class, userId);
+            if (user != null) {
+                user.setStatus(status);
+                session.update(user);
+                transaction.commit();
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            if (transaction != null) transaction.rollback();
+            e.printStackTrace();
+            return false;
+        } finally {
+            session.close();
+        }
+    }
+    
+    @Override
+    public boolean isUsernameExists(String username) {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        try {
+            Query<Long> query = session.createQuery(
+                "SELECT COUNT(*) FROM User WHERE username = :username", Long.class);
+            query.setParameter("username", username);
+            return query.uniqueResult() > 0;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
+        } finally {
+            session.close();
         }
     }
-
+    
+    @Override
+    public boolean isEmailExists(String email) {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        try {
+            Query<Long> query = session.createQuery(
+                "SELECT COUNT(*) FROM User WHERE email = :email", Long.class);
+            query.setParameter("email", email);
+            return query.uniqueResult() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            session.close();
+        }
+    }
 }

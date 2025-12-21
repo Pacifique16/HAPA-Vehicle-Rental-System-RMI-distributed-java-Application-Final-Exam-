@@ -321,7 +321,16 @@ public class LoginForm extends javax.swing.JFrame {
         }
         
         if (user != null) {
-            // User exists - now verify role matches the selected option
+            // Show OTP dialog for verification
+            OTPDialog otpDialog = new OTPDialog(this, username, user.getEmail());
+            otpDialog.setVisible(true);
+            
+            if (!otpDialog.isVerified()) {
+                JOptionPane.showMessageDialog(this, "Login cancelled - OTP not verified");
+                return;
+            }
+            
+            // User exists and OTP verified - now verify role matches the selected option
             if (isStaff && user.getRole().equals("admin")) {
                 // Staff member logging in - redirect to admin dashboard
                 new AdminDashboard(user).setVisible(true);

@@ -6,9 +6,9 @@ import java.util.Date;
 
 public interface BookingDAO {
     boolean saveBooking(Booking booking);
-    Booking getBookingById(int bookingId);
     List<Booking> getAllBookings();
     List<Booking> getBookingsByCustomerId(int customerId);
+    Booking getBookingById(int bookingId);
     boolean updateBooking(Booking booking);
     boolean deleteBooking(int bookingId);
     boolean cancelBooking(int bookingId);
@@ -21,9 +21,9 @@ public interface BookingDAO {
     boolean rejectBookingWithReason(int bookingId, String reason);
     List<Object[]> getActiveRentalsReport();
     List<Object[]> getMostRentedVehicles();
-    List<Object[]> getVehicleAvailabilityReport(java.util.Date date);
+    List<Object[]> getVehicleAvailabilityReport(Date date);
     List<Object[]> getBookingsHistoryReport();
-    boolean isDuplicateBooking(int customerId, int vehicleId, java.util.Date startDate, java.util.Date endDate);
-    boolean isVehicleUnavailable(int vehicleId, java.util.Date startDate, java.util.Date endDate);
-    String getNextAvailableDates(int vehicleId, java.util.Date requestedStart, java.util.Date requestedEnd);
+    boolean isDuplicateBooking(int customerId, int vehicleId, Date startDate, Date endDate);
+    boolean isVehicleUnavailable(int vehicleId, Date startDate, Date endDate);
+    String getNextAvailableDates(int vehicleId, Date requestedStart, Date requestedEnd);
 }
