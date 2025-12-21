@@ -11,6 +11,63 @@ import java.util.ArrayList;
 public class VehicleDAOImpl implements VehicleDAO {
     
     @Override
+    public boolean saveVehicle(Vehicle vehicle) {
+        return addVehicle(vehicle);
+    }
+    
+    @Override
+    public Vehicle getVehicleById(int id) {
+        return findById(id);
+    }
+    
+    @Override
+    public List<Vehicle> getAvailableVehicles() {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        try {
+            Query<Vehicle> query = session.createQuery(
+                "FROM Vehicle WHERE status = 'Available'", Vehicle.class);
+            return query.list();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        } finally {
+            session.close();
+        }
+    }
+    
+    @Override
+    public List<Vehicle> getVehiclesByCategory(String category) {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        try {
+            Query<Vehicle> query = session.createQuery(
+                "FROM Vehicle WHERE category = :category", Vehicle.class);
+            query.setParameter("category", category);
+            return query.list();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        } finally {
+            session.close();
+        }
+    }
+    
+    @Override
+    public boolean isDuplicatePlateNumber(String plateNumber) {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        try {
+            Query<Long> query = session.createQuery(
+                "SELECT COUNT(*) FROM Vehicle WHERE plateNumber = :plateNumber", Long.class);
+            query.setParameter("plateNumber", plateNumber);
+            return query.uniqueResult() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            session.close();
+        }
+    }
+    
+    // Legacy methods for backward compatibility
     public boolean addVehicle(Vehicle vehicle) {
         Session session = HibernateUtil.getSessionFactory().openSession();
         Transaction transaction = null;
@@ -43,7 +100,6 @@ public class VehicleDAOImpl implements VehicleDAO {
         }
     }
     
-    @Override
     public Vehicle findById(int id) {
         Session session = HibernateUtil.getSessionFactory().openSession();
         try {
@@ -112,7 +168,6 @@ public class VehicleDAOImpl implements VehicleDAO {
         }
     }
     
-    @Override
     public int countVehicles() {
         Session session = HibernateUtil.getSessionFactory().openSession();
         try {
@@ -126,7 +181,6 @@ public class VehicleDAOImpl implements VehicleDAO {
         }
     }
     
-    @Override
     public int countAvailableToday() {
         Session session = HibernateUtil.getSessionFactory().openSession();
         try {
@@ -163,7 +217,6 @@ public class VehicleDAOImpl implements VehicleDAO {
         }
     }
     
-    @Override
     public boolean isVehicleAvailableForBooking(int vehicleId) {
         Session session = HibernateUtil.getSessionFactory().openSession();
         try {

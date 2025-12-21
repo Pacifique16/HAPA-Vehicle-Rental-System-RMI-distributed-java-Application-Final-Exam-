@@ -11,13 +11,22 @@ import java.util.ArrayList;
 public class UserDAOImpl implements UserDAO {
     
     @Override
-    public User login(String username, String password) {
+    public boolean saveUser(User user) {
+        return addUser(user);
+    }
+    
+    @Override
+    public User getUserById(int id) {
+        return findById(id);
+    }
+    
+    @Override
+    public User getUserByUsername(String username) {
         Session session = HibernateUtil.getSessionFactory().openSession();
         try {
             Query<User> query = session.createQuery(
-                "FROM User WHERE username = :username AND password = :password", User.class);
+                "FROM User WHERE username = :username", User.class);
             query.setParameter("username", username);
-            query.setParameter("password", password);
             return query.uniqueResult();
         } catch (Exception e) {
             e.printStackTrace();
@@ -25,6 +34,37 @@ public class UserDAOImpl implements UserDAO {
         } finally {
             session.close();
         }
+    }
+    
+    @Override
+    public User getUserByEmail(String email) {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        try {
+            Query<User> query = session.createQuery(
+                "FROM User WHERE email = :email", User.class);
+            query.setParameter("email", email);
+            return query.uniqueResult();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            session.close();
+        }
+    }
+    
+    @Override
+    public boolean isDuplicateUsername(String username) {
+        return isUsernameExists(username);
+    }
+    
+    @Override
+    public boolean isDuplicateEmail(String email) {
+        return isEmailExists(email);
+    }
+    
+    // Legacy methods for backward compatibility
+    public User login(String username, String password) {
+        return authenticateUser(username, password);
     }
     
     @Override
@@ -44,7 +84,6 @@ public class UserDAOImpl implements UserDAO {
         }
     }
     
-    @Override
     public boolean addUser(User user) {
         Session session = HibernateUtil.getSessionFactory().openSession();
         Transaction transaction = null;
@@ -139,7 +178,6 @@ public class UserDAOImpl implements UserDAO {
         }
     }
     
-    @Override
     public User findById(int id) {
         Session session = HibernateUtil.getSessionFactory().openSession();
         try {
@@ -152,7 +190,6 @@ public class UserDAOImpl implements UserDAO {
         }
     }
     
-    @Override
     public boolean changePassword(int id, String oldP, String newP) {
         Session session = HibernateUtil.getSessionFactory().openSession();
         Transaction transaction = null;
@@ -213,7 +250,6 @@ public class UserDAOImpl implements UserDAO {
         }
     }
     
-    @Override
     public int countUsers() {
         Session session = HibernateUtil.getSessionFactory().openSession();
         try {
@@ -250,7 +286,6 @@ public class UserDAOImpl implements UserDAO {
         }
     }
     
-    @Override
     public boolean isUsernameExists(String username) {
         Session session = HibernateUtil.getSessionFactory().openSession();
         try {
@@ -266,7 +301,6 @@ public class UserDAOImpl implements UserDAO {
         }
     }
     
-    @Override
     public boolean isEmailExists(String email) {
         Session session = HibernateUtil.getSessionFactory().openSession();
         try {

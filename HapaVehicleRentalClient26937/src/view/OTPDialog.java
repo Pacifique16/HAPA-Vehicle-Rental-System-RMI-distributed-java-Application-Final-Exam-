@@ -40,7 +40,18 @@ public class OTPDialog extends JDialog {
         mainPanel.add(new JLabel("OTP:"), gbc);
         
         gbc.gridx = 1; gbc.gridy = 1;
-        otpField = new JTextField(10);
+        otpField = new JTextField(5); // Set to exactly 5 characters
+        // Add document filter to limit input to 5 digits only
+        otpField.setDocument(new javax.swing.text.PlainDocument() {
+            @Override
+            public void insertString(int offset, String str, javax.swing.text.AttributeSet attr) throws javax.swing.text.BadLocationException {
+                if (str == null) return;
+                // Only allow digits and limit to 5 characters
+                if (str.matches("\\d*") && (getLength() + str.length()) <= 5) {
+                    super.insertString(offset, str, attr);
+                }
+            }
+        });
         mainPanel.add(otpField, gbc);
         
         gbc.gridx = 0; gbc.gridy = 2;
@@ -64,7 +75,7 @@ public class OTPDialog extends JDialog {
             OTPService otpService = (OTPService) Naming.lookup("rmi://localhost:3506/OTPService");
             String otp = otpService.generateOTP(username);
             otpService.sendOTPEmail(userEmail, otp);
-            JOptionPane.showMessageDialog(this, "OTP sent to " + userEmail + "\\nFor demo: " + otp);
+            JOptionPane.showMessageDialog(this, "📧 OTP sent to your Gmail!\nCheck: " + userEmail);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Failed to send OTP: " + e.getMessage());
         }
@@ -74,6 +85,12 @@ public class OTPDialog extends JDialog {
         String otp = otpField.getText().trim();
         if (otp.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Please enter OTP");
+            return;
+        }
+        
+        // Validate OTP format - must be exactly 5 digits
+        if (!otp.matches("\\d{5}")) {
+            JOptionPane.showMessageDialog(this, "OTP must be exactly 5 digits");
             return;
         }
         
