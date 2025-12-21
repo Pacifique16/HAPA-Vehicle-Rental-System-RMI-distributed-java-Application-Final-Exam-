@@ -41,7 +41,7 @@ public class OTPServiceImpl extends UnicastRemoteObject implements OTPService {
             otpStorage.put(username, otp);
             otpTimestamp.put(username, System.currentTimeMillis());
             
-            System.out.println("DEBUG: Storing OTP = " + otp + " for user = " + username);
+            System.out.println("DEBUG: Storing OTP = " + otp + " for user = " + username + " (" + user.getFullName() + ")");
             
             return otp;
         } catch (Exception e) {
@@ -75,8 +75,12 @@ public class OTPServiceImpl extends UnicastRemoteObject implements OTPService {
     }
     
     @Override
+    public boolean sendOTPEmail(String email, String otp, String fullName) throws RemoteException {
+        return util.GmailSender.sendOTP(email, otp, fullName);
+    }
+    
+    @Override
     public boolean sendOTPEmail(String email, String otp) throws RemoteException {
-        String userName = email.substring(0, email.indexOf('@'));
-        return util.GmailSender.sendOTP(email, otp, userName);
+        return util.GmailSender.sendOTP(email, otp, "Valued Customer");
     }
 }

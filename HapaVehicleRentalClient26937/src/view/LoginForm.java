@@ -321,8 +321,8 @@ public class LoginForm extends javax.swing.JFrame {
         }
         
         if (user != null) {
-            // Show OTP dialog for verification
-            OTPDialog otpDialog = new OTPDialog(this, username, user.getEmail());
+            // Show OTP dialog for verification - pass the full name
+            OTPDialog otpDialog = new OTPDialog(this, username, user.getEmail(), user.getFullName());
             otpDialog.setVisible(true);
             
             if (!otpDialog.isVerified()) {
