@@ -59,7 +59,8 @@ public class UserDAOImpl implements UserDAO {
     
     @Override
     public boolean isDuplicateEmail(String email) {
-        return isEmailExists(email);
+        // Allow duplicate emails for exam presentation
+        return false;
     }
     
     // Legacy methods for backward compatibility
@@ -102,11 +103,11 @@ public class UserDAOImpl implements UserDAO {
                 return false;
             }
             
-            // Check for duplicate email
-            if (isEmailExists(user.getEmail())) {
-                System.out.println("ERROR: Email already exists: " + user.getEmail());
-                return false;
-            }
+            // Check for duplicate email - skip for exam presentation
+            // if (isEmailExists(user.getEmail())) {
+            //     System.out.println("ERROR: Email already exists: " + user.getEmail());
+            //     return false;
+            // }
             
             System.out.println("No duplicates found. Saving user to database...");
             session.save(user);
@@ -224,18 +225,10 @@ public class UserDAOImpl implements UserDAO {
             System.out.println("New email: " + user.getEmail());
             System.out.println("New phone: " + user.getPhone());
             
-            // Check if email exists for OTHER users (not this user)
-            Query<Long> emailQuery = session.createQuery(
-                "SELECT COUNT(*) FROM User WHERE email = :email AND id != :id", Long.class);
-            emailQuery.setParameter("email", user.getEmail());
-            emailQuery.setParameter("id", user.getId());
+            // Skip email duplicate check for exam presentation
+            // All users can have the same email now
             
-            if (emailQuery.uniqueResult() > 0) {
-                System.out.println("ERROR: Email already exists for another user");
-                return false;
-            }
-            
-            System.out.println("No email conflicts. Updating user profile...");
+            System.out.println("Updating user profile...");
             session.update(user);
             transaction.commit();
             System.out.println("SUCCESS: User profile updated successfully");

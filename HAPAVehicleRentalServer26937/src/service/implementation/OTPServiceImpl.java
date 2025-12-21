@@ -41,18 +41,6 @@ public class OTPServiceImpl extends UnicastRemoteObject implements OTPService {
             otpStorage.put(username, otp);
             otpTimestamp.put(username, System.currentTimeMillis());
             
-            // Send OTP via email - pass the OTP directly
-            String subject = "HAPA Vehicle Rental - OTP Verification";
-            String body = "Dear " + user.getFullName() + ",\n\n" +
-                         "Your OTP verification code is: " + otp + "\n\n" +
-                         "This code will expire in 5 minutes.\n\n" +
-                         "Best regards,\n" +
-                         "HAPA Vehicle Rental Team";
-            
-            // Send email directly using GmailSender to avoid extraction issues
-            String userName = user.getEmail().substring(0, user.getEmail().indexOf('@'));
-            boolean emailSent = util.GmailSender.sendOTP(user.getEmail(), otp, userName);
-            
             System.out.println("DEBUG: Storing OTP = " + otp + " for user = " + username);
             
             return otp;
