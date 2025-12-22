@@ -15,10 +15,13 @@ public class OTPDialog extends JDialog {
     private String username;
     private String userEmail;
     
-    public OTPDialog(Frame parent, String username, String userEmail) {
+    private String userFullName;
+    
+    public OTPDialog(Frame parent, String username, String userEmail, String userFullName) {
         super(parent, "OTP Verification", true);
         this.username = username;
         this.userEmail = userEmail;
+        this.userFullName = userFullName;
         initComponents();
         sendOTP();
     }
@@ -74,8 +77,8 @@ public class OTPDialog extends JDialog {
         try {
             OTPService otpService = (OTPService) Naming.lookup("rmi://localhost:3506/OTPService");
             String otp = otpService.generateOTP(username);
-            // Now send the email explicitly
-            otpService.sendOTPEmail(userEmail, otp);
+            // Pass the full name directly
+            otpService.sendOTPEmail(userEmail, otp, userFullName);
             JOptionPane.showMessageDialog(this, "📧 OTP sent to your Gmail!\nCheck: " + userEmail);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Failed to send OTP: " + e.getMessage());
