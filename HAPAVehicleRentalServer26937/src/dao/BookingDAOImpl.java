@@ -174,8 +174,8 @@ public class BookingDAOImpl implements BookingDAO {
     public List<String[]> getTodaysBookingsWithDetails() {
         Session session = HibernateUtil.getSessionFactory().openSession();
         try {
-            // Get all bookings first (for testing)
-            String hql = "SELECT b FROM Booking b";
+            // Get only today's bookings
+            String hql = "SELECT b FROM Booking b WHERE DATE(b.startDate) = CURRENT_DATE OR DATE(b.endDate) = CURRENT_DATE OR (b.startDate <= CURRENT_DATE AND b.endDate >= CURRENT_DATE)";
             Query<Booking> query = session.createQuery(hql, Booking.class);
             List<Booking> bookings = query.list();
             
@@ -205,7 +205,7 @@ public class BookingDAOImpl implements BookingDAO {
                 }
             }
             
-            System.out.println("Found " + bookingDetails.size() + " bookings");
+            System.out.println("Found " + bookingDetails.size() + " bookings for today");
             return bookingDetails;
         } catch (Exception e) {
             e.printStackTrace();

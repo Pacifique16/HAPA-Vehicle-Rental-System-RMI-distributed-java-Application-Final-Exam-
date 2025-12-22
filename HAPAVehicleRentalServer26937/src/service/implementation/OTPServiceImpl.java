@@ -79,4 +79,9 @@ public class OTPServiceImpl extends UnicastRemoteObject implements OTPService {
         String userName = email.substring(0, email.indexOf('@'));
         return util.GmailSender.sendOTP(email, otp, userName);
     }
+    
+    @Override
+    public boolean sendOTPEmail(String email, String otp, String fullName) throws RemoteException {
+        return util.GmailSender.sendOTP(email, otp, fullName);
+    }
 }
