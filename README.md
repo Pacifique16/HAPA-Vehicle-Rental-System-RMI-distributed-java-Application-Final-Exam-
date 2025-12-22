@@ -207,6 +207,27 @@ See [TESTING_GUIDE.md](TESTING_GUIDE.md) for comprehensive testing instructions.
 
 This project is licensed under the MIT License.
 
+## 👨‍💻 Author
+
+**Pacifique HARERIMANA**
+- Email: harerimanapacifique95@gmail.com
+- Student ID: 26937
+- Institution: AUCA (Adventist University of Central Africa)
+
+## 🎯 Project Purpose
+
+This project was developed as a **Final Exam Project** for the **Java Programming** course, demonstrating:
+
+- **Java RMI** implementation for distributed computing
+- **Enterprise application architecture** with proper separation of concerns
+- **Database integration** using Hibernate ORM
+- **Message-oriented middleware** with ActiveMQ
+- **Security implementation** with session management and OTP authentication
+- **Modern GUI development** with Java Swing
+- **Report generation** and data export capabilities
+
+The system showcases advanced Java enterprise development skills and distributed system design patterns.
+
 ---
 
 **Built with ❤️ for modern vehicle rental management**
