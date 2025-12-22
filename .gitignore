@@ -1,3 +1,29 @@
-/HAPAVehicleRentalServer26937/nbproject/private/
-/HAPAVehicleRentalServer26937/build/
-/HAPAVehicleRentalServer26937/dist/
+# Build directories
+*/build/
+*/dist/
+*/bin/
+
+# NetBeans private files
+*/nbproject/private/
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+
+# Compiled class files
+*.class
+
+# Log files
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+
+# JAR files (optional - uncomment if you don't want to track JARs)
+# *.jar
