@@ -1,109 +1,87 @@
-# ActiveMQ Integration Testing Guide
+# Testing Guide
 
-## 🎯 What We've Implemented
+## Prerequisites
 
-✅ **MessageProducer** - Sends OTP messages to ActiveMQ queue
-✅ **MessageConsumer** - Receives messages and sends emails  
-✅ **EmbeddedActiveMQBroker** - Runs ActiveMQ inside your server
-✅ **Updated OTPServiceImpl** - Uses message broker instead of direct email
-✅ **Updated Server.java** - Starts broker and consumer automatically
+1. **PostgreSQL** installed and running
+2. **Java 8+** installed
+3. **Required JAR files** in lib folders
 
-## 🚀 Quick Start (3 Steps)
+## Setup Steps
 
-### Step 1: Download Required JARs
-Download these 4 JARs and put them in `HAPAVehicleRentalServer26937\lib\`:
-
-1. **activemq-broker-5.18.3.jar**
-2. **activemq-client-5.18.3.jar** 
-3. **geronimo-jms_1.1_spec-1.1.1.jar**
-4. **slf4j-api-1.7.36.jar**
-
-**Direct Download Links:**
-```
-https://repo1.maven.org/maven2/org/apache/activemq/activemq-broker/5.18.3/activemq-broker-5.18.3.jar
-https://repo1.maven.org/maven2/org/apache/activemq/activemq-client/5.18.3/activemq-client-5.18.3.jar
-https://repo1.maven.org/maven2/org/apache/geronimo/specs/geronimo-jms_1.1_spec/1.1.1/geronimo-jms_1.1_spec-1.1.1.jar
-https://repo1.maven.org/maven2/org/slf4j/slf4j-api/1.7.36/slf4j-api-1.7.36.jar
+### 1. Database Setup
+```sql
+-- Run in PostgreSQL
+CREATE DATABASE hapa_vehicle_rental;
+\c hapa_vehicle_rental;
+\i create_database.sql
+\i database_setup.sql
 ```
 
-### Step 2: Start the Server
-Run `Server.java` - you should see:
+### 2. Server Dependencies
+Add to `HAPAVehicleRentalServer26937/lib/`:
+- hibernate-core-5.6.15.Final.jar
+- postgresql-42.7.7.jar
+- activemq-broker-5.18.3.jar
+- activemq-client-5.18.3.jar
+- geronimo-jms_1.1_spec-1.1.1.jar
+- slf4j-api-1.7.36.jar
+
+### 3. Client Dependencies
+Add to `HapaVehicleRentalClient26937/lib/`:
+- itextpdf-5.5.13.1.jar
+
+## Testing Workflow
+
+### 1. Start Server
+```bash
+cd HAPAVehicleRentalServer26937/src
+java controller.Server
 ```
-✅ Embedded ActiveMQ Broker started on tcp://localhost:61616
-🔗 Initializing MessageProducer...
-✅ MessageProducer initialized successfully
-✅ OTP Message Consumer started and listening for messages...
+Expected output:
 ```
-
-### Step 3: Test OTP Flow
-1. Run the client application
-2. Try to login with any username
-3. Check server console for message flow
-
-## 🔍 Expected Message Flow
-
-When user requests OTP:
-
-1. **OTPServiceImpl.generateOTP()** called
-2. **MessageProducer.sendOTPMessage()** queues message
-3. **MessageConsumer** receives message  
-4. **GmailSender.sendOTP()** sends actual email
-5. User receives OTP email
-
-## 📋 Console Output Examples
-
-### ✅ Successful Flow:
-```
-DEBUG: Generated OTP = 12345 (length: 5)
-📤 OTP message queued for: user@example.com (OTP: 12345)
-📧 Processing OTP message for: user@example.com
-✅ OTP email sent successfully to user@example.com
+✅ Embedded ActiveMQ Broker started
+✅ HAPA Vehicle Rental Server is running on port 3506
 ```
 
-### ❌ Error Scenarios:
+### 2. Start Client
+```bash
+cd HapaVehicleRentalClient26937/src
+java view.LoginForm
 ```
-❌ Failed to initialize MessageProducer: Connection refused
-   Make sure ActiveMQ broker is running on tcp://localhost:61616
-```
 
-## 🛠️ Troubleshooting
+### 3. Test Features
 
-### Problem: ClassNotFoundException
-**Solution:** Add all 4 JAR files to server lib folder
+#### Admin Login
+- Username: `admin`
+- Password: `admin123`
+- Test: Dashboard, user management, vehicle management, reports
 
-### Problem: Connection refused
-**Solution:** Ensure server starts the embedded broker first
+#### Customer Registration
+- Register new customer account
+- Verify OTP email delivery
+- Test: Vehicle booking, profile management
 
-### Problem: Messages queued but not processed
-**Solution:** Check if MessageConsumer started successfully
+#### Core Functionality
+- **User Management**: Add/edit/delete users
+- **Vehicle Management**: Add/edit/delete vehicles
+- **Booking System**: Create/approve/reject bookings
+- **Reports**: Export PDF/CSV reports
+- **Session Management**: Test timeout and logout
 
-### Problem: Emails not sending
-**Solution:** Verify GmailSender configuration in EmailConfig
+## Troubleshooting
 
-## 🧪 Manual Testing Steps
+### Database Connection Issues
+- Verify PostgreSQL is running on port 5432
+- Check database credentials in hibernate.cfg.xml
 
-1. **Start Server** - Check for broker startup messages
-2. **Login Attempt** - Try any username to trigger OTP
-3. **Check Console** - Verify message flow in server logs
-4. **Check Email** - Confirm OTP email received
-5. **Enter OTP** - Verify OTP validation works
+### RMI Connection Issues
+- Ensure server is running on port 3506
+- Check firewall settings
 
-## 📊 Success Indicators
+### Email/OTP Issues
+- Verify Gmail SMTP configuration
+- Check ActiveMQ broker startup
 
-- ✅ No ClassNotFoundException errors
-- ✅ Embedded broker starts successfully  
-- ✅ MessageProducer initializes
-- ✅ MessageConsumer starts listening
-- ✅ OTP messages appear in queue
-- ✅ Emails are sent successfully
-- ✅ OTP validation works
-
-## 🎉 Benefits Achieved
-
-1. **Asynchronous Processing** - Email sending doesn't block OTP generation
-2. **Reliability** - Messages are queued even if email service is temporarily down
-3. **Scalability** - Can add multiple consumers for high volume
-4. **Monitoring** - Clear visibility of message flow in logs
-5. **No External Dependencies** - Embedded broker runs inside your application
-
-Your message broker integration is now complete! 🚀
+### Missing Dependencies
+- Ensure all JAR files are in correct lib folders
+- Check classpath configuration in IDE
