@@ -177,6 +177,7 @@ public class AdminHomePanel extends JPanel {
                 lblRentals.setText("<html><div style='text-align:center'><div style='font-size:20px;color:#222;'>" + stats[2] + "</div><div style='font-size:12px;color:#666;'>Total Rentals</div></div></html>");
                 lblAvailable.setText("<html><div style='text-align:center'><div style='font-size:20px;color:#222;'>" + stats[3] + "</div><div style='font-size:12px;color:#666;'>Vehicles Available Today</div></div></html>");
             } else {
+                System.out.println("BookingService is null, using sample data");
                 // Show sample data if RMI not available
                 lblVehicles.setText("<html><div style='text-align:center'><div style='font-size:20px;color:#222;'>27</div><div style='font-size:12px;color:#666;'>Total Vehicles</div></div></html>");
                 lblUsers.setText("<html><div style='text-align:center'><div style='font-size:20px;color:#222;'>14</div><div style='font-size:12px;color:#666;'>Total Users</div></div></html>");
@@ -184,6 +185,7 @@ public class AdminHomePanel extends JPanel {
                 lblAvailable.setText("<html><div style='text-align:center'><div style='font-size:20px;color:#222;'>24</div><div style='font-size:12px;color:#666;'>Vehicles Available Today</div></div></html>");
             }
         } catch (Exception ex){
+            System.err.println("Error loading analytics: " + ex.getMessage());
             ex.printStackTrace();
         }
     }
@@ -195,7 +197,7 @@ public class AdminHomePanel extends JPanel {
             
             if (bookingService != null) {
                 // Get today's bookings with customer and vehicle details in one call
-                var bookingDetails = bookingService.getTodaysBookingsWithDetails();
+                java.util.List<String[]> bookingDetails = bookingService.getTodaysBookingsWithDetails();
                 
                 for (String[] row : bookingDetails) {
                     model.addRow(row);

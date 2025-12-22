@@ -18,6 +18,7 @@ public class Category {
     @Column(name = "description")
     private String description;
     
+    // Many-to-Many: One category can have many vehicles, and one vehicle can belong to many categories
     @ManyToMany(mappedBy = "categories")
     private Set<Vehicle> vehicles = new HashSet<>();
     

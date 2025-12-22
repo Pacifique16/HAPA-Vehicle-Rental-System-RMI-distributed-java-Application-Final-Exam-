@@ -17,10 +17,7 @@ public class BookingServiceImpl extends UnicastRemoteObject implements BookingSe
         super();
         try {
             this.bookingDAO = new BookingDAOImpl();
-            System.out.println("BookingServiceImpl created successfully");
         } catch (Exception e) {
-            System.err.println("Error creating BookingServiceImpl: " + e.getMessage());
-            e.printStackTrace();
             throw new RemoteException("Failed to initialize BookingService", e);
         }
     }

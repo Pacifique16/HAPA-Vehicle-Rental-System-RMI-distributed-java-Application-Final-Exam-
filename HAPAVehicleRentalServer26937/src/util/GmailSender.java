@@ -31,7 +31,6 @@ public class GmailSender {
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
             message.setSubject("HAPA Vehicle Rental - OTP Verification");
             
-            // Use plain text instead of HTML to prevent truncation
             String textContent = 
                 "HAPA Vehicle Rental - OTP Verification\n\n" +
                 "Dear " + userName + ",\n\n" +
@@ -42,15 +41,10 @@ public class GmailSender {
                 "HAPA Vehicle Rental Team";
             
             message.setText(textContent);
-            
             Transport.send(message);
-            
-            System.out.println("✅ OTP email sent successfully to: " + toEmail);
             return true;
             
         } catch (Exception e) {
-            System.err.println("❌ Failed to send OTP email: " + e.getMessage());
-            e.printStackTrace();
             return false;
         }
     }

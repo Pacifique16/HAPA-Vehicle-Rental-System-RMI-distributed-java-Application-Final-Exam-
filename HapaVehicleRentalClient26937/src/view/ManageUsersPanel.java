@@ -81,14 +81,17 @@ public class ManageUsersPanel extends JPanel {
         actionPanel.setBackground(Color.WHITE);
         
         JButton bAdd = new JButton("Add User");
-        JButton bExport = new JButton("Export CSV");
+        JButton bExportPdf = new JButton("Export PDF");
+        JButton bExportCsv = new JButton("Export CSV");
         JButton bBulkDelete = new JButton("Bulk Delete");
         
         bAdd.addActionListener(e -> openAdd());
-        bExport.addActionListener(e -> exportToCSV());
+        bExportPdf.addActionListener(e -> exportToPDF());
+        bExportCsv.addActionListener(e -> exportToCSV());
         bBulkDelete.addActionListener(e -> bulkDelete());
         
-        actionPanel.add(bExport);
+        actionPanel.add(bExportPdf);
+        actionPanel.add(bExportCsv);
         actionPanel.add(bBulkDelete);
         actionPanel.add(bAdd);
 
@@ -459,6 +462,23 @@ public class ManageUsersPanel extends JPanel {
             }
         } catch (Exception ex) { 
             ex.printStackTrace(); 
+        }
+    }
+    
+    private void exportToPDF() {
+        try {
+            JFileChooser fc = new JFileChooser();
+            fc.setDialogTitle("Save PDF Report");
+            fc.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("PDF files", "pdf"));
+            if (fc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+                String path = fc.getSelectedFile().getAbsolutePath();
+                if (!path.toLowerCase().endsWith(".pdf")) path += ".pdf";
+                
+                util.PDFExporter.exportTableToPDF(table, "Users Report", path);
+                JOptionPane.showMessageDialog(this, "Report exported successfully to: " + path);
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Export failed: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
     

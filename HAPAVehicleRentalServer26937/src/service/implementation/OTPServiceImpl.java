@@ -23,7 +23,6 @@ public class OTPServiceImpl extends UnicastRemoteObject implements OTPService {
     @Override
     public String generateOTP(String username) throws RemoteException {
         try {
-            // Get user email from database
             UserDAOImpl userDAO = new UserDAOImpl();
             User user = userDAO.getUserByUsername(username);
             
@@ -31,17 +30,17 @@ public class OTPServiceImpl extends UnicastRemoteObject implements OTPService {
                 throw new RemoteException("User not found: " + username);
             }
             
-            // Generate a proper 5-digit OTP (10000 to 99999)
             Random random = new Random();
-            int otpNumber = random.nextInt(90000) + 10000; // This ensures 5 digits: 10000-99999
-            String otp = String.format("%05d", otpNumber); // Force 5 digits with leading zeros if needed
+            int otpNumber = random.nextInt(90000) + 10000;
+            String otp = String.format("%05d", otpNumber);
             
-            System.out.println("DEBUG: Generated OTP = " + otp + " (length: " + otp.length() + ")");
-            System.out.println("DEBUG: OTP range validation - Min: 10000, Max: 99999, Generated: " + otpNumber);
             otpStorage.put(username, otp);
             otpTimestamp.put(username, System.currentTimeMillis());
             
-            System.out.println("DEBUG: Storing OTP = " + otp + " for user = " + username + " (" + user.getFullName() + ")");
+            boolean emailSent = util.GmailSender.sendOTP(user.getEmail(), otp, user.getFullName());
+            if (!emailSent) {
+                throw new RemoteException("Failed to send OTP email");
+            }
             
             return otp;
         } catch (Exception e) {
@@ -72,11 +71,6 @@ public class OTPServiceImpl extends UnicastRemoteObject implements OTPService {
         }
         
         return isValid;
-    }
-    
-    @Override
-    public boolean sendOTPEmail(String email, String otp, String fullName) throws RemoteException {
-        return util.GmailSender.sendOTP(email, otp, fullName);
     }
     
     @Override

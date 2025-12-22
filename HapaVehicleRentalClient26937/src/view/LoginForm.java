@@ -20,13 +20,16 @@ package view;
  */
 
 import service.UserService;
+import service.SessionService;
 import java.rmi.Naming;
 import java.awt.Image;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import model.User;
+import model.Session;
 import javax.swing.JOptionPane;
 import javax.swing.SwingConstants;
+import util.ClientSessionManager;
 
 public class LoginForm extends javax.swing.JFrame {
 
@@ -321,31 +324,43 @@ public class LoginForm extends javax.swing.JFrame {
         }
         
         if (user != null) {
-            // Show OTP dialog for verification - pass the full name
-            OTPDialog otpDialog = new OTPDialog(this, username, user.getEmail(), user.getFullName());
-            otpDialog.setVisible(true);
-            
-            if (!otpDialog.isVerified()) {
-                JOptionPane.showMessageDialog(this, "Login cancelled - OTP not verified");
-                return;
-            }
-            
-            // User exists and OTP verified - now verify role matches the selected option
-            if (isStaff && user.getRole().equals("admin")) {
-                // Staff member logging in - redirect to admin dashboard
-                new AdminDashboard(user).setVisible(true);
-                this.dispose();
-            } else if (!isStaff && user.getRole().equals("customer")) {
-                // Customer logging in - redirect to customer dashboard
-                new CustomerDashboard(user).setVisible(true);
-                this.dispose();
-            } else {
-                // Role mismatch - user exists but selected wrong role
-                if (isStaff && user.getRole().equals("customer")) {
-                    JOptionPane.showMessageDialog(this, "You're not registered as staff", "Error", JOptionPane.ERROR_MESSAGE);
-                } else {
-                    JOptionPane.showMessageDialog(this, "Invalid role selection!", "Error", JOptionPane.ERROR_MESSAGE);
+            // Create session
+            try {
+                SessionService sessionService = (SessionService) Naming.lookup("rmi://localhost:3506/SessionService");
+                Session session = sessionService.createSession(user.getId(), user.getUsername(), user.getRole(), "127.0.0.1");
+                
+                // Start client session management
+                ClientSessionManager.getInstance().startSession(session);
+                
+                // Show OTP dialog for verification - pass the full name
+                OTPDialog otpDialog = new OTPDialog(this, username, user.getEmail(), user.getFullName());
+                otpDialog.setVisible(true);
+                
+                if (!otpDialog.isVerified()) {
+                    // OTP failed - invalidate session
+                    sessionService.invalidateSession(session.getSessionId());
+                    JOptionPane.showMessageDialog(this, "Login cancelled - OTP not verified");
+                    return;
                 }
+                
+                // User exists, OTP verified, and session created - now verify role matches
+                if (isStaff && user.getRole().equals("admin")) {
+                    new AdminDashboard(user).setVisible(true);
+                    this.dispose();
+                } else if (!isStaff && user.getRole().equals("customer")) {
+                    new CustomerDashboard(user).setVisible(true);
+                    this.dispose();
+                } else {
+                    // Role mismatch - invalidate session
+                    sessionService.invalidateSession(session.getSessionId());
+                    if (isStaff && user.getRole().equals("customer")) {
+                        JOptionPane.showMessageDialog(this, "You're not registered as staff", "Error", JOptionPane.ERROR_MESSAGE);
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Invalid role selection!", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Session creation failed: " + e.getMessage());
             }
         } else {
             // Authentication failed - invalid credentials

@@ -222,21 +222,31 @@ public class BookingDAOImpl implements BookingDAO {
             // Get total vehicles count
             Query<Long> vehicleQuery = session.createQuery("SELECT COUNT(*) FROM Vehicle", Long.class);
             int totalVehicles = vehicleQuery.uniqueResult().intValue();
+            System.out.println("DEBUG: Total vehicles = " + totalVehicles);
             
             // Get total users count
             Query<Long> userQuery = session.createQuery("SELECT COUNT(*) FROM User", Long.class);
             int totalUsers = userQuery.uniqueResult().intValue();
+            System.out.println("DEBUG: Total users = " + totalUsers);
             
             // Get total bookings count
             Query<Long> bookingQuery = session.createQuery("SELECT COUNT(*) FROM Booking", Long.class);
             int totalBookings = bookingQuery.uniqueResult().intValue();
+            System.out.println("DEBUG: Total bookings = " + totalBookings);
             
-            // Get available vehicles count
-            Query<Long> availableQuery = session.createQuery("SELECT COUNT(*) FROM Vehicle WHERE status = 'Available'", Long.class);
+            // Get available vehicles count (not currently booked today)
+            Query<Long> availableQuery = session.createQuery(
+                "SELECT COUNT(DISTINCT v.id) FROM Vehicle v WHERE v.id NOT IN " +
+                "(SELECT DISTINCT b.vehicleId FROM Booking b WHERE b.status IN ('APPROVED', 'PENDING') " +
+                "AND CURRENT_DATE BETWEEN b.startDate AND b.endDate)", Long.class);
             int availableVehicles = availableQuery.uniqueResult().intValue();
+            System.out.println("DEBUG: Available vehicles (not booked today) = " + availableVehicles);
             
-            return new int[]{totalVehicles, totalUsers, totalBookings, availableVehicles};
+            int[] stats = new int[]{totalVehicles, totalUsers, totalBookings, availableVehicles};
+            System.out.println("DEBUG: Returning stats = " + java.util.Arrays.toString(stats));
+            return stats;
         } catch (Exception e) {
+            System.err.println("ERROR in getDashboardStats: " + e.getMessage());
             e.printStackTrace();
             return new int[]{0, 0, 0, 0};
         } finally {
@@ -481,6 +491,60 @@ public class BookingDAOImpl implements BookingDAO {
     
     @Override
     public String getNextAvailableDates(int vehicleId, Date requestedStart, Date requestedEnd) {
-        return "No conflicts found";
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        try {
+            // Get all conflicting bookings for this vehicle
+            Query<Booking> query = session.createQuery(
+                "FROM Booking WHERE vehicleId = :vehicleId " +
+                "AND status IN ('PENDING', 'APPROVED') " +
+                "AND ((startDate <= :endDate AND endDate >= :startDate)) " +
+                "ORDER BY startDate", Booking.class);
+            query.setParameter("vehicleId", vehicleId);
+            query.setParameter("startDate", requestedStart);
+            query.setParameter("endDate", requestedEnd);
+            
+            List<Booking> conflictingBookings = query.list();
+            
+            if (conflictingBookings.isEmpty()) {
+                return "No conflicts found";
+            }
+            
+            StringBuilder message = new StringBuilder();
+            message.append("Vehicle is booked during:\n");
+            
+            java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("yyyy-MM-dd");
+            
+            for (Booking booking : conflictingBookings) {
+                message.append("• ").append(dateFormat.format(booking.getStartDate()))
+                       .append(" to ").append(dateFormat.format(booking.getEndDate()))
+                       .append(" (").append(booking.getStatus()).append(")\n");
+            }
+            
+            // Find next available date after the last conflicting booking
+            Date lastEndDate = null;
+            for (Booking booking : conflictingBookings) {
+                if (lastEndDate == null || booking.getEndDate().after(lastEndDate)) {
+                    lastEndDate = booking.getEndDate();
+                }
+            }
+            
+            if (lastEndDate != null) {
+                // Add one day to the last end date
+                java.util.Calendar cal = java.util.Calendar.getInstance();
+                cal.setTime(lastEndDate);
+                cal.add(java.util.Calendar.DAY_OF_MONTH, 1);
+                Date nextAvailable = cal.getTime();
+                
+                message.append("\nVehicle will be available from: ")
+                       .append(dateFormat.format(nextAvailable));
+            }
+            
+            return message.toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "Error checking availability";
+        } finally {
+            session.close();
+        }
     }
 }

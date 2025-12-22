@@ -48,12 +48,18 @@ public class AdminReportsPanel extends JPanel {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.setBackground(Color.WHITE);
         
-        JButton btnPdf = new JButton("Export to CSV");
+        JButton btnPdf = new JButton("Export to PDF");
         btnPdf.setBackground(new Color(255, 217, 102));
         btnPdf.setFocusPainted(false);
-        btnPdf.addActionListener(e -> exportCurrentTab());
+        btnPdf.addActionListener(e -> exportCurrentTab("PDF"));
+        
+        JButton btnCsv = new JButton("Export to CSV");
+        btnCsv.setBackground(new Color(220, 220, 220));
+        btnCsv.setFocusPainted(false);
+        btnCsv.addActionListener(e -> exportCurrentTab("CSV"));
         
         buttonPanel.add(btnPdf);
+        buttonPanel.add(btnCsv);
         
         top.add(titleLabel, BorderLayout.WEST);
         top.add(buttonPanel, BorderLayout.EAST);
@@ -141,7 +147,9 @@ public class AdminReportsPanel extends JPanel {
                         else if (idx == 3) populateHistoryTable(data);
                         tabsLoaded[idx] = true;
                     }
-                } catch (Exception ex){ ex.printStackTrace(); }
+                } catch (Exception ex){ 
+                    // Silent error handling
+                }
             }
         };
         worker.execute();
@@ -200,7 +208,7 @@ public class AdminReportsPanel extends JPanel {
         }
     }
 
-    private void exportCurrentTab(){
+    private void exportCurrentTab(String format){
         int idx = tabs.getSelectedIndex();
         JTable current;
         String title;
@@ -210,18 +218,33 @@ public class AdminReportsPanel extends JPanel {
             case 2: current = tblAvailability; title = "Vehicle Availability Report"; break;
             default: current = tblHistory; title = "Bookings History Report"; break;
         }
+        
         JFileChooser fc = new JFileChooser();
-        fc.setDialogTitle("Save CSV Report");
-        fc.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("CSV files", "csv"));
+        if ("PDF".equals(format)) {
+            fc.setDialogTitle("Save PDF Report");
+            fc.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("PDF files", "pdf"));
+        } else {
+            fc.setDialogTitle("Save CSV Report");
+            fc.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("CSV files", "csv"));
+        }
+        
         int ret = fc.showSaveDialog(this);
-        if (ret!=JFileChooser.APPROVE_OPTION) return;
+        if (ret != JFileChooser.APPROVE_OPTION) return;
+        
         String path = fc.getSelectedFile().getAbsolutePath();
-        if (!path.toLowerCase().endsWith(".csv")) path += ".csv";
+        String extension = "PDF".equals(format) ? ".pdf" : ".csv";
+        if (!path.toLowerCase().endsWith(extension.toLowerCase())) {
+            path += extension;
+        }
+        
         try {
-            exportTableToCsv(current, title, path);
+            if ("PDF".equals(format)) {
+                util.PDFExporter.exportTableToPDF(current, title, path);
+            } else {
+                exportTableToCsv(current, title, path);
+            }
             JOptionPane.showMessageDialog(this, "Report exported successfully to: " + path);
         } catch (Exception ex){ 
-            ex.printStackTrace(); 
             JOptionPane.showMessageDialog(this, "Export failed: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE); 
         }
     }

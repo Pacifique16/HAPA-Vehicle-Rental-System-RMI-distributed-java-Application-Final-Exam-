@@ -134,7 +134,8 @@ public class MyBookingsPanel extends JPanel {
         bPast = new JButton("Past");
         bUpcoming = new JButton("Upcoming");
         bClearDates = new JButton("Clear dates");
-        btnExport = new JButton("Export CSV");
+        JButton btnExportPdf = new JButton("Export PDF");
+        JButton btnExportCsv = new JButton("Export CSV");
 
         for (JButton bb : new JButton[]{bThisMonth, bPast, bUpcoming, bClearDates}) {
             bb.setFocusPainted(false);
@@ -142,16 +143,21 @@ public class MyBookingsPanel extends JPanel {
             bb.setBackground(new Color(250, 250, 250));
             bb.setPreferredSize(new Dimension(110, 28));
         }
-        btnExport.setFocusPainted(false);
-        btnExport.setBackground(new Color(255, 217, 102));
-        btnExport.setPreferredSize(new Dimension(110, 28));
+        btnExportPdf.setFocusPainted(false);
+        btnExportPdf.setBackground(new Color(255, 217, 102));
+        btnExportPdf.setPreferredSize(new Dimension(110, 28));
+        
+        btnExportCsv.setFocusPainted(false);
+        btnExportCsv.setBackground(new Color(220, 220, 220));
+        btnExportCsv.setPreferredSize(new Dimension(110, 28));
 
         actions.add(bThisMonth);
         actions.add(bPast);
         actions.add(bUpcoming);
         actions.add(bClearDates);
         actions.add(Box.createHorizontalStrut(12));
-        actions.add(btnExport);
+        actions.add(btnExportPdf);
+        actions.add(btnExportCsv);
 
         c.gridx = 0; c.gridy = 1; c.gridwidth = 4; c.weightx = 1;
         top.add(actions, c);
@@ -286,7 +292,8 @@ public class MyBookingsPanel extends JPanel {
             goFirstAndReload();
         });
 
-        btnExport.addActionListener(e -> exportCsvCurrentFiltered());
+        btnExportPdf.addActionListener(e -> exportPdfCurrentFiltered());
+        btnExportCsv.addActionListener(e -> exportCsvCurrentFiltered());
         btnCancelBooking.addActionListener(e -> cancelSelectedBooking());
         btnReopenBooking.addActionListener(e -> reopenSelectedBooking());
 
@@ -634,6 +641,53 @@ public class MyBookingsPanel extends JPanel {
         dlg.pack();
         dlg.setLocationRelativeTo(this);
         dlg.setVisible(true);
+    }
+    
+    private void exportPdfCurrentFiltered() {
+        if (currentSearchResults.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No records to export.");
+            return;
+        }
+
+        JFileChooser fc = new JFileChooser();
+        fc.setDialogTitle("Save PDF Report");
+        fc.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("PDF files", "pdf"));
+        int ret = fc.showSaveDialog(this);
+        if (ret != JFileChooser.APPROVE_OPTION) return;
+        
+        String path = fc.getSelectedFile().getAbsolutePath();
+        if (!path.toLowerCase().endsWith(".pdf")) path += ".pdf";
+        
+        try {
+            // Create a temporary table model with all filtered data
+            javax.swing.table.DefaultTableModel tempModel = new javax.swing.table.DefaultTableModel(
+                new String[]{"Vehicle", "Start", "End", "Days", "Total", "Status"}, 0);
+            
+            // Add all filtered results to temp model
+            for (Booking booking : currentSearchResults) {
+                model.Vehicle vehicle = vehicleMap.get(booking.getVehicleId());
+                String vehicleName = vehicle != null ? vehicle.getModel() : "Vehicle ID: " + booking.getVehicleId();
+                long days = Math.max(1, (booking.getEndDate().getTime() - booking.getStartDate().getTime()) / (1000L * 60 * 60 * 24) + 1);
+                
+                Object[] row = {
+                    vehicleName,
+                    sdf.format(booking.getStartDate()),
+                    sdf.format(booking.getEndDate()),
+                    days,
+                    String.format("%,.0f", booking.getTotalCost()),
+                    booking.getStatus()
+                };
+                tempModel.addRow(row);
+            }
+            
+            // Create temporary table with all data
+            javax.swing.JTable tempTable = new javax.swing.JTable(tempModel);
+            
+            util.PDFExporter.exportTableToPDF(tempTable, "My Bookings Report (All Pages)", path);
+            JOptionPane.showMessageDialog(this, "Report exported successfully to: " + path + "\nTotal records: " + currentSearchResults.size());
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Export failed: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
     
     private void exportCsvCurrentFiltered() {

@@ -77,8 +77,7 @@ public class OTPDialog extends JDialog {
         try {
             OTPService otpService = (OTPService) Naming.lookup("rmi://localhost:3506/OTPService");
             String otp = otpService.generateOTP(username);
-            // Pass the full name directly
-            otpService.sendOTPEmail(userEmail, otp, userFullName);
+            // Email is already sent by generateOTP method
             JOptionPane.showMessageDialog(this, "📧 OTP sent to your Gmail!\nCheck: " + userEmail);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Failed to send OTP: " + e.getMessage());

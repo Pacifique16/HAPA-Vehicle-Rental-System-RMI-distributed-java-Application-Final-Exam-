@@ -91,11 +91,7 @@ public class UserDAOImpl implements UserDAO {
         try {
             transaction = session.beginTransaction();
             
-            System.out.println("=== USER REGISTRATION DEBUG ===");
-            System.out.println("Attempting to register user: " + user.getUsername() + ", " + user.getEmail());
-            System.out.println("Full name: " + user.getFullName());
-            System.out.println("Phone: " + user.getPhone());
-            System.out.println("Role: " + user.getRole());
+
             
             // Check for duplicate username
             if (isUsernameExists(user.getUsername())) {
@@ -109,10 +105,8 @@ public class UserDAOImpl implements UserDAO {
             //     return false;
             // }
             
-            System.out.println("No duplicates found. Saving user to database...");
             session.save(user);
             transaction.commit();
-            System.out.println("SUCCESS: User registered successfully: " + user.getUsername());
             return true;
         } catch (Exception e) {
             if (transaction != null) transaction.rollback();
@@ -220,18 +214,11 @@ public class UserDAOImpl implements UserDAO {
         try {
             transaction = session.beginTransaction();
             
-            System.out.println("=== USER PROFILE UPDATE DEBUG ===");
-            System.out.println("Updating user ID: " + user.getId());
-            System.out.println("New email: " + user.getEmail());
-            System.out.println("New phone: " + user.getPhone());
-            
             // Skip email duplicate check for exam presentation
             // All users can have the same email now
             
-            System.out.println("Updating user profile...");
             session.update(user);
             transaction.commit();
-            System.out.println("SUCCESS: User profile updated successfully");
             return true;
         } catch (Exception e) {
             if (transaction != null) transaction.rollback();

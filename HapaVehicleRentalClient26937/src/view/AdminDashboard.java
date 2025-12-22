@@ -8,6 +8,7 @@ package view;
 
 import java.awt.Image;
 import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
 import model.User;
 
 /**
@@ -312,8 +313,14 @@ public class AdminDashboard extends javax.swing.JFrame {
      * @param evt Action event from button click
      */
     private void btnLogoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLogoutActionPerformed
-        new LoginForm().setVisible(true);    // Show login form
-        this.dispose();                      // Close admin dashboard
+        int confirm = JOptionPane.showConfirmDialog(this, 
+            "Are you sure you want to logout?", 
+            "Confirm Logout", 
+            JOptionPane.YES_NO_OPTION);
+        
+        if (confirm == JOptionPane.YES_OPTION) {
+            util.ClientSessionManager.getInstance().logout();
+        }
     }//GEN-LAST:event_btnLogoutActionPerformed
 
     /**

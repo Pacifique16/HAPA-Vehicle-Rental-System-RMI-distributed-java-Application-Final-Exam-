@@ -15,10 +15,7 @@ public class UserServiceImpl extends UnicastRemoteObject implements UserService 
         super();
         try {
             this.userDAO = new UserDAOImpl();
-            System.out.println("UserServiceImpl created successfully");
         } catch (Exception e) {
-            System.err.println("Error creating UserServiceImpl: " + e.getMessage());
-            e.printStackTrace();
             throw new RemoteException("Failed to initialize UserService", e);
         }
     }

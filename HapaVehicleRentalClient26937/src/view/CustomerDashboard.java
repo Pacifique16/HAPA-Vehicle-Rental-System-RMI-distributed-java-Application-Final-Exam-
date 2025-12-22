@@ -284,8 +284,14 @@ public class CustomerDashboard extends javax.swing.JFrame {
      * Logs out the current customer and returns to login screen
      */
     private void btnLogoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLogoutActionPerformed
-        new LoginForm().setVisible(true);    // Show login form
-        this.dispose();                      // Close customer dashboard
+        int confirm = javax.swing.JOptionPane.showConfirmDialog(this, 
+            "Are you sure you want to logout?", 
+            "Confirm Logout", 
+            javax.swing.JOptionPane.YES_NO_OPTION);
+        
+        if (confirm == javax.swing.JOptionPane.YES_OPTION) {
+            util.ClientSessionManager.getInstance().logout();
+        }
     }//GEN-LAST:event_btnLogoutActionPerformed
 
     /**
