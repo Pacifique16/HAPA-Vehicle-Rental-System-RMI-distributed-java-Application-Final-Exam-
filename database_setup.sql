@@ -1,136 +1,68 @@
--- HAPA Vehicle Rental System Database Setup
--- Run this script in PostgreSQL to create the complete database
+-- HAPA Vehicle Rental System - Sample Data Setup
+-- Run this script after starting the server (Hibernate creates tables automatically)
+-- This script only inserts sample data for testing
+-- Database name: hapa_vehicle_rental_db
 
--- Create database (run this first)
--- CREATE DATABASE hapa_vehicle_rental;
--- \c hapa_vehicle_rental;
-
--- Drop existing tables if they exist
-DROP TABLE IF EXISTS bookings CASCADE;
-DROP TABLE IF EXISTS maintenance CASCADE;
-DROP TABLE IF EXISTS vehicles CASCADE;
-DROP TABLE IF EXISTS categories CASCADE;
-DROP TABLE IF EXISTS users CASCADE;
-
--- Create Users table
-CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    email VARCHAR(100) NOT NULL,
-    full_name VARCHAR(100) NOT NULL,
-    phone VARCHAR(20),
-    role VARCHAR(20) DEFAULT 'customer',
-    status VARCHAR(20) DEFAULT 'Active',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Create Categories table
-CREATE TABLE categories (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(50) NOT NULL,
-    description TEXT
-);
-
--- Create Vehicles table
-CREATE TABLE vehicles (
-    id SERIAL PRIMARY KEY,
-    model VARCHAR(100) NOT NULL,
-    plate_number VARCHAR(20) UNIQUE NOT NULL,
-    category_id INTEGER REFERENCES categories(id),
-    seats INTEGER NOT NULL,
-    fuel_type VARCHAR(20) NOT NULL,
-    transmission VARCHAR(20) NOT NULL,
-    price_per_day DECIMAL(10,2) NOT NULL,
-    status VARCHAR(20) DEFAULT 'Available',
-    image_path VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Create Bookings table
-CREATE TABLE bookings (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id),
-    vehicle_id INTEGER REFERENCES vehicles(id),
-    start_date DATE NOT NULL,
-    end_date DATE NOT NULL,
-    total_cost DECIMAL(10,2) NOT NULL,
-    status VARCHAR(20) DEFAULT 'PENDING',
-    booking_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    approved_by INTEGER REFERENCES users(id),
-    approval_date TIMESTAMP
-);
-
--- Create Maintenance table
-CREATE TABLE maintenance (
-    id SERIAL PRIMARY KEY,
-    vehicle_id INTEGER REFERENCES vehicles(id),
-    maintenance_type VARCHAR(100) NOT NULL,
-    description TEXT,
-    cost DECIMAL(10,2),
-    maintenance_date DATE NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Insert default admin user
+-- Insert default admin user with strong password
 INSERT INTO users (username, password, email, full_name, phone, role, status) 
-VALUES ('admin', 'admin123', 'admin@hapa.com', 'System Administrator', '0788123456', 'admin', 'Active');
+VALUES ('admin', 'Admin123!', 'admin@hapa.rw', 'System Administrator', '0788000000', 'admin', 'Active')
+ON CONFLICT (username) DO NOTHING;
 
--- Insert vehicle categories
-INSERT INTO categories (name, description) VALUES 
-('Sedan', 'Comfortable passenger cars'),
-('SUV', 'Sport Utility Vehicles'),
-('Hatchback', 'Compact cars with rear door'),
-('Pickup', 'Light trucks for cargo'),
-('Van', 'Large passenger or cargo vehicles'),
-('Luxury', 'Premium and luxury vehicles');
+-- Insert sample customer users with different emails and strong passwords
+INSERT INTO users (username, password, email, full_name, phone, role, status) VALUES
+('pacifique', 'Pacifique123!', 'harerimanapacifique95@gmail.com', 'Pacifique HARERIMANA', '0789534491', 'customer', 'Active'),
+('beatrice', 'Beatrice123!', 'beatrice.nyira@gmail.com', 'Beatrice NYIRAHABIMANA', '0785005381', 'customer', 'Active'),
+('christophe', 'Christophe123!', 'chris.nsanzineza@gmail.com', 'Christophe NSANZINEZA', '0788551100', 'customer', 'Active'),
+('king', 'King123!', 'king.cyuzuzo@gmail.com', 'King CYUZUZO REGIS', '0789632145', 'customer', 'Active'),
+('leandre', 'Leandre123!', 'leandre.ntwari@gmail.com', 'Ntwari Ganza Leandre', '0791889257', 'customer', 'Active'),
+('justin', 'Justin123!', 'justin.ntwali@gmail.com', 'Ntwali Justin', '0785263149', 'customer', 'Active'),
+('ghislaine', 'Ghislaine123!', 'ghislaine.mugisha@gmail.com', 'Ghislaine MUGISHA', '0786622101', 'customer', 'Active'),
+('christian', 'Christian123!', 'christian.hare@gmail.com', 'Christian HARERIMANA', '0787164108', 'customer', 'Active'),
+('samuel', 'Samuel123!', 'samuel.kwizera@gmail.com', 'KWIZERA Samuel', '0781111112', 'customer', 'Active'),
+('bakundukize', 'Bakundukize123!', 'pacitekno12@gmail.com', 'Pacifique BAKUNDUKIZE', '0785231462', 'customer', 'Active'),
+('queen', 'Queen123!', 'queenuwisheja@gmail.com', 'Queen UWISHEJA', '0788888888', 'customer', 'Active'),
+('esther', 'Esther123!', 'charmingesther2@gmail.com', 'Esther INGABIRE', '0785236410', 'customer', 'Active')
+ON CONFLICT (username) DO NOTHING;
 
--- Insert sample vehicles
-INSERT INTO vehicles (model, plate_number, category_id, seats, fuel_type, transmission, price_per_day, status, image_path) VALUES
-('Toyota Prius', 'RAD001A', 1, 5, 'Hybrid', 'Automatic', 25000, 'Available', 'prius.png'),
-('Toyota RAV4', 'RAD002B', 2, 5, 'Petrol', 'Automatic', 35000, 'Available', 'rav4.png'),
-('Kia Sportage', 'RAD003C', 2, 5, 'Petrol', 'Automatic', 40000, 'Available', 'sportage.png'),
-('Toyota Hiace', 'RAD004D', 5, 14, 'Diesel', 'Manual', 50000, 'Available', 'hiace.png'),
-('Ford Ranger', 'RAD005E', 4, 5, 'Diesel', 'Manual', 45000, 'Available', 'ranger.png'),
-('Audi A4', 'RAD006F', 6, 5, 'Petrol', 'Automatic', 60000, 'Available', 'audi.png'),
-('BMW X5', 'RAD007G', 6, 7, 'Petrol', 'Automatic', 80000, 'Available', 'bmw.png'),
-('Mercedes G-Class', 'RAD008H', 6, 5, 'Petrol', 'Automatic', 120000, 'Available', 'g class.jpg'),
-('Lamborghini Huracan', 'RAD009I', 6, 2, 'Petrol', 'Automatic', 200000, 'Available', 'lamborghini.png'),
-('Rolls Royce Phantom', 'RAD010J', 6, 5, 'Petrol', 'Automatic', 300000, 'Available', 'royce.png'),
-('Toyota Prado', 'RAD011K', 2, 7, 'Diesel', 'Automatic', 55000, 'Available', 'prado.png'),
-('Hyundai Tucson', 'RAD012L', 2, 5, 'Petrol', 'Automatic', 38000, 'Available', 'tucson.png'),
-('Kia Sorento', 'RAD013M', 2, 7, 'Petrol', 'Automatic', 42000, 'Available', 'sorento.png'),
-('Nissan Patrol', 'RAD014N', 2, 8, 'Petrol', 'Automatic', 65000, 'Available', 'nissan.png'),
-('Toyota Coaster', 'RAD015O', 5, 30, 'Diesel', 'Manual', 80000, 'Available', 'coaster.png'),
-('Hyundai Strarex', 'RAD016P', 5, 12, 'Diesel', 'Manual', 45000, 'Available', 'strarex.png'),
-('McLaren 720S', 'RAD017Q', 6, 2, 'Petrol', 'Automatic', 250000, 'Available', 'mclaren.png'),
-('Bentley Continental', 'RAD018R', 6, 4, 'Petrol', 'Automatic', 180000, 'Available', 'bentley.png'),
-('Hummer H2', 'RAD019S', 6, 8, 'Petrol', 'Automatic', 100000, 'Available', 'hummer.jpg'),
-('Land Rover Discovery', 'RAD020T', 2, 7, 'Diesel', 'Automatic', 70000, 'Available', 'rover.png'),
-('Toyota Prius V', 'RAD021U', 1, 7, 'Hybrid', 'Automatic', 30000, 'Available', 'prius1.png'),
-('Toyota Prius C', 'RAD022V', 1, 5, 'Hybrid', 'Automatic', 28000, 'Available', 'prius2.png'),
-('Kia Cerato', 'RAD023W', 1, 5, 'Petrol', 'Manual', 22000, 'Available', 'kiaa.png'),
-('Toyota Hiace Super GL', 'RAD024X', 5, 10, 'Diesel', 'Manual', 48000, 'Available', 'hiace1.png'),
-('Limousine', 'RAD025Y', 6, 8, 'Petrol', 'Automatic', 150000, 'Available', 'limousine.png'),
-('Toyota Land Cruiser', 'RAD026Z', 2, 8, 'Diesel', 'Automatic', 75000, 'Available', 'cruiser.png');
+-- Insert sample vehicles (matching your existing data)
+INSERT INTO vehicles (model, plate_number, category, seats, fuel_type, transmission, price_per_day, status, image_path) VALUES
+('Toyota Hiace 2022', 'RAD 450 D', 'Van', 12, 'Diesel', 'Manual', 150000, 'Available', 'images/hiace.png'),
+('Bentley Continental GT', 'RAD 600 B', 'SUV', 2, 'Petrol', 'Automatic', 600000, 'Available', 'images/bentley.png'),
+('Toyota Hiace 2010', 'RAD 963 E', 'Van', 12, 'Petrol', 'Manual', 120000, 'Available', 'images/van.png'),
+('Toyota Prius 2014', 'RAJ 852 B', 'SUV', 5, 'Hybrid', 'Automatic', 45000, 'Available', 'images/prius1.png'),
+('Ford Ranger 2022', 'RAE 110 E', 'Pickup', 5, 'Petrol', 'Automatic', 100000, 'Available', 'images/ranger.png'),
+('Limousine Stretch 2023', 'RAG 900 L', 'Coupe', 8, 'Petrol', 'Automatic', 500000, 'Available', 'images/limousine.png'),
+('Hummer H2 2022', 'RAB 777 A', 'SUV', 6, 'Petrol', 'Automatic', 320000, 'Available', 'images/hummer.jpg'),
+('Kia Sorento 2011', 'RAC 456 H', 'Hatchback', 7, 'Diesel', 'Automatic', 50000, 'Available', 'images/kiaa.png'),
+('KIA SORENTO 2011', 'RAB 820 A', 'SUV', 5, 'Petrol', 'Automatic', 50000, 'Available', 'images/sorento.png'),
+('McLaren', 'RAD 801 L', 'Luxury', 2, 'Electric', 'Automatic', 200000, 'Available', 'images/mclaren.png'),
+('Lamborghini Huracan', 'RAD 800 L', 'SUV', 2, 'Petrol', 'Automatic', 800000, 'Available', 'images/lamborghini.png'),
+('Nissan', 'RAH 789 V', 'SUV', 4, 'Petrol', 'Manual', 150000, 'Available', 'images/nissan.png'),
+('Kia Sorento 2011', 'RAC 456 K', 'Hatchback', 7, 'Diesel', 'Automatic', 50000, 'Available', 'images/kiaa.png'),
+('Hyundai Strarex 2022', 'RAH 897 C', 'Van', 9, 'Petrol', 'Automatic', 170000, 'Available', 'images/strarex.png'),
+('Toyota Coaster 2018', 'RAI 110 B', 'Bus', 16, 'Diesel', 'Manual', 225000, 'Available', 'images/coaster.png'),
+('Rolls Royce Phantom', 'RAD 900 R', 'SUV', 4, 'Petrol', 'Automatic', 900000, 'Available', 'images/royce.png'),
+('Land Cruiser TXL 2023', 'RAA 016 A', 'SUV', 7, 'Petrol', 'Manual', 130000, 'Available', 'images/cruiser.png'),
+('Mercedes G-Wagon G63', 'RAD 500 G', 'SUV', 6, 'Petrol', 'Automatic', 500000, 'Available', 'images/g class.jpg'),
+('Toyota Corolla 2014', 'RAF 990 F', 'SUV', 5, 'Electric', 'Automatic', 45000, 'Available', 'images/prius.png'),
+('Range Rover Sport 2010', 'RAI 789 H', 'SUV', 5, 'Petrol', 'Automatic', 350000, 'Available', 'images/rover.png'),
+('RAV 4 2002', 'RAC 300 C', 'SUV', 5, 'Diesel', 'Manual', 45000, 'Available', 'images/rav4.png'),
+('Toyota Hiace 2017', 'RAI 888 H', 'Van', 15, 'Petrol', 'Manual', 150000, 'Available', 'images/hiace1.png'),
+('Hyundai Tucson 2012', 'RAC 123 M', 'Hatchback', 5, 'Diesel', 'Automatic', 50000, 'Available', 'images/tucson.png'),
+('Toyota Prius 2014', 'RAD 493 A', 'Coupe', 5, 'Hybrid', 'Automatic', 45000, 'Available', 'images/prius2.png'),
+('Kia Sorento 2012', 'RAH 741 J', 'SUV', 7, 'Diesel', 'Automatic', 45000, 'Available', 'images/sorento.png'),
+('Audi A6 2023', 'RAB 505 H', 'Sedan', 4, 'Electric', 'Automatic', 220000, 'Available', 'images/audi.png'),
+('Kia Sportage 2012', 'RAH 789 B', 'Hatchback', 5, 'Diesel', 'Automatic', 50000, 'Available', 'images/sportage.png'),
+('Prado TXL 2023', 'RAJ 709 H', 'SUV', 7, 'Diesel', 'Manual', 150000, 'Available', 'images/prado.png')
+ON CONFLICT (plate_number) DO NOTHING;
 
--- Insert sample bookings
-INSERT INTO bookings (user_id, vehicle_id, start_date, end_date, total_cost, status, booking_date) VALUES
-(1, 1, '2024-01-15', '2024-01-18', 75000, 'COMPLETED', '2024-01-10 10:30:00'),
-(1, 3, '2024-01-20', '2024-01-25', 200000, 'APPROVED', '2024-01-18 14:20:00'),
-(1, 5, '2024-02-01', '2024-02-05', 180000, 'PENDING', '2024-01-28 09:15:00');
+-- Insert sample bookings (recent dates for testing)
+INSERT INTO bookings (user_id, vehicle_id, start_date, end_date, total_cost, status, booking_date, rejection_reason) VALUES
+(1, 1, '2024-12-20', '2024-12-22', 300000, 'APPROVED', '2024-12-18 10:30:00', NULL),
+(2, 3, '2024-12-21', '2024-12-25', 480000, 'APPROVED', '2024-12-19 14:20:00', NULL),
+(3, 5, '2024-12-22', '2024-12-26', 400000, 'PENDING', '2024-12-20 09:15:00', NULL),
+(4, 2, '2024-12-15', '2024-12-18', 1800000, 'REJECTED', '2024-12-13 16:45:00', 'Incomplete documentation provided'),
+(5, 7, '2024-12-25', '2024-12-30', 1600000, 'CANCELLED', '2024-12-22 11:30:00', NULL)
+ON CONFLICT DO NOTHING;
 
--- Create indexes for better performance
-CREATE INDEX idx_users_username ON users(username);
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_vehicles_status ON vehicles(status);
-CREATE INDEX idx_bookings_user_id ON bookings(user_id);
-CREATE INDEX idx_bookings_vehicle_id ON bookings(vehicle_id);
-CREATE INDEX idx_bookings_status ON bookings(status);
-
--- Grant permissions
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO postgres;
-GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO postgres;
-
--- Display setup completion message
-SELECT 'Database setup completed successfully!' as message;
+SELECT 'Sample data inserted successfully!' as message;
